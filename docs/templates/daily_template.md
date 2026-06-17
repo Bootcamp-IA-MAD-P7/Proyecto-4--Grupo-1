@@ -6,7 +6,7 @@
 |---|---|
 | Fecha | YYYY-MM-DD |
 | Sprint | Sprint X |
-| Asistentes | Persona 1, Persona 2, Persona 3, Persona 4 |
+| Asistentes | Naimireth, Veru, Arnaldo, Miguel |
 
 ## Objetivo del dia
 
@@ -14,7 +14,7 @@ Resumen breve del foco principal del equipo durante el dia.
 
 ## Estado por persona
 
-### Persona 1
+### Naimireth
 
 **Que hice ayer:**
 
@@ -28,7 +28,7 @@ Resumen breve del foco principal del equipo durante el dia.
 
 - Ninguno.
 
-### Persona 2
+### Veru
 
 **Que hice ayer:**
 
@@ -42,7 +42,7 @@ Resumen breve del foco principal del equipo durante el dia.
 
 - Ninguno.
 
-### Persona 3
+### Arnaldo
 
 **Que hice ayer:**
 
@@ -56,7 +56,7 @@ Resumen breve del foco principal del equipo durante el dia.
 
 - Ninguno.
 
-### Persona 4
+### Miguel
 
 **Que hice ayer:**
 
