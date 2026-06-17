@@ -89,4 +89,3 @@ Resumen breve del foco principal del equipo durante el dia.
 ## Proximos pasos
 
 - 
-
