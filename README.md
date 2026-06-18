@@ -1,19 +1,39 @@
 # Proyecto 4 - Grupo 1
 
+![Python](https://img.shields.io/badge/Python-3.11-3776AB?style=for-the-badge&logo=python&logoColor=white)
+![Machine Learning](https://img.shields.io/badge/Machine%20Learning-Regresi%C3%B3n-1A7F37?style=for-the-badge)
+![Dataset](https://img.shields.io/badge/Dataset-Kaggle-20BEFF?style=for-the-badge&logo=kaggle&logoColor=white)
+![Modelo](https://img.shields.io/badge/Modelo-Linear%20Regression-8250DF?style=for-the-badge)
+![Estado](https://img.shields.io/badge/Nivel%20Esencial-Casi%20completo-9A6700?style=for-the-badge)
+
 Proyecto grupal de Machine Learning orientado a resolver un problema de regresión usando el dataset **Regression with a Flood Prediction Dataset** de Kaggle.
+
+## Vista rápida
+
+| Área | Estado |
+|---|---|
+| Problema | Predicción de probabilidad de inundación |
+| Tipo de modelo | Regresión |
+| Variable objetivo | `FloodProbability` |
+| Dataset | Regression with a Flood Prediction Dataset |
+| Fuente | Kaggle |
+| Nivel Esencial | ![Casi completo](https://img.shields.io/badge/Casi%20completo-9A6700?style=flat-square) |
+| Pendiente principal | App productivizada con Streamlit |
 
 ## Objetivo
 
-El objetivo del proyecto es construir un modelo capaz de predecir la variable numérica `FloodProbability`, que representa la probabilidad estimada de inundación a partir de diferentes factores de riesgo.
+Construir un modelo capaz de predecir la variable numérica `FloodProbability`, que representa la probabilidad estimada de inundación a partir de diferentes factores de riesgo.
 
 ## Dataset
 
-- Fuente: Kaggle
-- Competición: Regression with a Flood Prediction Dataset
-- URL: https://www.kaggle.com/competitions/playground-series-s4e5
-- Archivo principal para EDA y entrenamiento: `train.csv`
-- Variable objetivo: `FloodProbability`
-- Tipo de problema: Regresión
+| Elemento | Valor |
+|---|---|
+| Fuente | Kaggle |
+| Competición | Regression with a Flood Prediction Dataset |
+| URL | https://www.kaggle.com/competitions/playground-series-s4e5 |
+| Archivo principal | `train.csv` |
+| Variable objetivo | `FloodProbability` |
+| Tipo de problema | Regresión |
 
 Los archivos del dataset deben descargarse desde Kaggle y colocarse localmente en:
 
@@ -57,16 +77,15 @@ Proyecto-4--Grupo-1/
 
 ## Tecnologías
 
-- Python
-- Jupyter Notebook / Google Colab
-- Pandas
-- NumPy
-- Scikit-learn
-- Matplotlib
-- Seaborn
-- Optuna
-- Streamlit
-- Joblib
+| Área | Herramientas |
+|---|---|
+| Análisis de datos | Pandas, NumPy |
+| Visualización | Matplotlib, Seaborn |
+| Machine Learning | Scikit-learn |
+| Optimización | Optuna |
+| Productivización | Streamlit |
+| Persistencia de modelo | Joblib |
+| Entorno de trabajo | Jupyter Notebook, Google Colab, VS Code |
 
 ## Instalación
 
@@ -90,54 +109,32 @@ pip install -r requirements.txt
 
 ## Notebooks
 
-Los notebooks principales del proyecto son:
+| Notebook | Contenido | Estado |
+|---|---|---|
+| `notebooks/01_EDA.ipynb` | Carga, revisión inicial, visualizaciones y conclusiones del EDA | ![Hecho](https://img.shields.io/badge/Hecho-1A7F37?style=flat-square) |
+| `notebooks/02_modeling.ipynb` | Modelado baseline, métricas, overfitting, residuos e interpretación | ![Hecho](https://img.shields.io/badge/Hecho-1A7F37?style=flat-square) |
 
-```text
-notebooks/01_EDA.ipynb
-notebooks/02_modeling.ipynb
-```
+### `01_EDA.ipynb`
 
-### 01_EDA.ipynb
+Incluye carga del dataset, revisión inicial, análisis de nulos y duplicados, distribución de la variable objetivo, visualizaciones relevantes para regresión, correlaciones y conclusiones del EDA.
 
-Incluye:
+### `02_modeling.ipynb`
 
-- carga y revisión inicial del dataset,
-- análisis de nulos y duplicados,
-- análisis de la variable objetivo,
-- visualizaciones relevantes para regresión,
-- correlaciones,
-- conclusiones del EDA.
+Incluye separación de variables predictoras y objetivo, train/test split, entrenamiento de modelos baseline, métricas RMSE, MAE y R2, control de overfitting, gráficos de predicción vs valor real, análisis de residuos, interpretación mediante coeficientes y guardado del modelo baseline.
 
-### 02_modeling.ipynb
+## Estado del Nivel Esencial
 
-Incluye:
-
-- separación de variables predictoras y variable objetivo,
-- train/test split,
-- entrenamiento de modelos baseline,
-- métricas RMSE, MAE y R2,
-- comparación train/test,
-- cálculo de overfitting,
-- gráfico de predicción vs valor real,
-- análisis de residuos,
-- interpretación mediante coeficientes,
-- guardado del modelo baseline.
-
-## Estado actual del Nivel Esencial
-
-| Requisito | Estado |
-|---|---|
-| Modelo funcional de regresión | Hecho |
-| EDA con visualizaciones | Hecho |
-| Overfitting inferior al 5% | Hecho |
-| Informe de rendimiento | Hecho |
-| App productivizada | Pendiente |
+| Requisito | Estado | Evidencia |
+|---|---|---|
+| Modelo funcional de regresión | ![Hecho](https://img.shields.io/badge/Hecho-1A7F37?style=flat-square) | `notebooks/02_modeling.ipynb` |
+| EDA con visualizaciones | ![Hecho](https://img.shields.io/badge/Hecho-1A7F37?style=flat-square) | `notebooks/01_EDA.ipynb` |
+| Overfitting inferior al 5% | ![Hecho](https://img.shields.io/badge/Hecho-1A7F37?style=flat-square) | 0.077% |
+| Informe de rendimiento | ![Hecho](https://img.shields.io/badge/Hecho-1A7F37?style=flat-square) | Métricas, residuos, predicción vs real |
+| App productivizada | ![Pendiente](https://img.shields.io/badge/Pendiente-9A6700?style=flat-square) | `app/app.py` |
 
 ## Resultado baseline
 
 El mejor modelo baseline identificado hasta el momento es `Linear Regression`.
-
-Resultados principales:
 
 | Modelo | RMSE Validation | MAE Validation | R2 Validation | Overfitting R2 |
 |---|---:|---:|---:|---:|
@@ -145,7 +142,7 @@ Resultados principales:
 
 ## Próximo paso
 
-El requisito pendiente del Nivel Esencial es la productivización del modelo.
+El requisito pendiente del Nivel Esencial es la **productivización del modelo**.
 
 La siguiente tarea será crear:
 
@@ -155,16 +152,22 @@ app/app.py
 
 con Streamlit, para cargar el modelo entrenado y permitir obtener predicciones de `FloodProbability` desde una interfaz sencilla.
 
+## Documentación del proyecto
+
+| Documento | Contenido |
+|---|---|
+| `docs/dataset.md` | Información del dataset y archivos necesarios |
+| `docs/project_management/github_workflow.md` | Flujo de trabajo con ramas, commits y Pull Requests |
+| `docs/project_management/essential_level_checklist.md` | Seguimiento del Nivel Esencial |
+| `docs/project_management/streamlit_plan.md` | Plan para construir la app de Streamlit |
+| `docs/dailies/` | Registro de reuniones diarias |
+
 ## Flujo de trabajo
 
-El equipo trabaja con:
+| Rama | Uso |
+|---|---|
+| `main` | Versiones estables |
+| `dev` | Rama principal de desarrollo |
+| ramas de tarea | Cambios concretos mediante Pull Request |
 
-```text
-main
-dev
-ramas de tarea
-```
-
-La rama `dev` se utiliza como rama principal de desarrollo. Los cambios se integran mediante Pull Requests hacia `dev`.
-
-La rama `main` se reserva para versiones estables del proyecto.
+Los cambios se integran mediante Pull Requests hacia `dev`. La rama `main` queda reservada para una versión estable del proyecto.

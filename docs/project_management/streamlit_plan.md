@@ -1,5 +1,9 @@
 # Plan de Streamlit
 
+![Streamlit](https://img.shields.io/badge/Streamlit-App-FF4B4B?style=for-the-badge&logo=streamlit&logoColor=white)
+![Estado](https://img.shields.io/badge/Estado-Pendiente-9A6700?style=for-the-badge)
+![Nivel Esencial](https://img.shields.io/badge/Nivel%20Esencial-Requisito%20clave-8250DF?style=for-the-badge)
+
 Este documento define el plan para crear una aplicación Streamlit que productivice el modelo de predicción de inundaciones.
 
 ## Objetivo
@@ -36,41 +40,41 @@ notebooks/02_modeling.ipynb
 
 ## Variables de entrada
 
-La app debe pedir las 20 variables predictoras usadas en el modelo:
+La app debe pedir las 20 variables predictoras usadas en el modelo. La columna `id` no debe pedirse al usuario porque no se usa como variable predictora.
 
-```text
-MonsoonIntensity
-TopographyDrainage
-RiverManagement
-Deforestation
-Urbanization
-ClimateChange
-DamsQuality
-Siltation
-AgriculturalPractices
-Encroachments
-IneffectiveDisasterPreparedness
-DrainageSystems
-CoastalVulnerability
-Landslides
-Watersheds
-DeterioratingInfrastructure
-PopulationScore
-WetlandLoss
-InadequatePlanning
-PoliticalFactors
-```
-
-La columna `id` no debe pedirse al usuario porque no se usa como variable predictora.
+| Variable | Uso |
+|---|---|
+| `MonsoonIntensity` | Entrada del modelo |
+| `TopographyDrainage` | Entrada del modelo |
+| `RiverManagement` | Entrada del modelo |
+| `Deforestation` | Entrada del modelo |
+| `Urbanization` | Entrada del modelo |
+| `ClimateChange` | Entrada del modelo |
+| `DamsQuality` | Entrada del modelo |
+| `Siltation` | Entrada del modelo |
+| `AgriculturalPractices` | Entrada del modelo |
+| `Encroachments` | Entrada del modelo |
+| `IneffectiveDisasterPreparedness` | Entrada del modelo |
+| `DrainageSystems` | Entrada del modelo |
+| `CoastalVulnerability` | Entrada del modelo |
+| `Landslides` | Entrada del modelo |
+| `Watersheds` | Entrada del modelo |
+| `DeterioratingInfrastructure` | Entrada del modelo |
+| `PopulationScore` | Entrada del modelo |
+| `WetlandLoss` | Entrada del modelo |
+| `InadequatePlanning` | Entrada del modelo |
+| `PoliticalFactors` | Entrada del modelo |
 
 ## Flujo de la aplicación
 
-1. Cargar el modelo con `joblib`.
-2. Mostrar un formulario con las variables predictoras.
-3. Recoger los valores introducidos por el usuario.
-4. Construir un `DataFrame` con una sola fila.
-5. Ejecutar `model.predict()`.
-6. Mostrar la predicción de `FloodProbability`.
+| Paso | Acción |
+|---:|---|
+| 1 | Cargar el modelo con `joblib` |
+| 2 | Mostrar un formulario con las variables predictoras |
+| 3 | Recoger los valores introducidos por el usuario |
+| 4 | Construir un `DataFrame` con una sola fila |
+| 5 | Ejecutar `model.predict()` |
+| 6 | Mostrar la predicción de `FloodProbability` |
 
 ## Diseño recomendado
 
@@ -94,12 +98,14 @@ streamlit run app/app.py
 
 ## Criterios de aceptación
 
-- La app se ejecuta con `streamlit run app/app.py`.
-- La app carga el modelo desde `models/flood_baseline_model.joblib`.
-- La app permite introducir las 20 variables predictoras.
-- La app genera una predicción numérica de `FloodProbability`.
-- La app muestra el resultado de forma clara.
-- El README explica cómo ejecutar la app.
+| Criterio | Estado esperado |
+|---|---|
+| La app se ejecuta con `streamlit run app/app.py` | Cumple |
+| La app carga el modelo desde `models/flood_baseline_model.joblib` | Cumple |
+| La app permite introducir las 20 variables predictoras | Cumple |
+| La app genera una predicción numérica de `FloodProbability` | Cumple |
+| La app muestra el resultado de forma clara | Cumple |
+| El README explica cómo ejecutar la app | Cumple |
 
 ## Rama sugerida
 
