@@ -1,6 +1,6 @@
 # Checklist Nivel Esencial
 
-Este documento resume los requisitos mínimos que debe cumplir el proyecto para alcanzar el Nivel Esencial.
+Este documento resume los requisitos mínimos que debe cumplir el proyecto para alcanzar el Nivel Esencial y el estado actual de cada punto.
 
 ## 1. Modelo de ML funcional
 
@@ -9,15 +9,21 @@ Este documento resume los requisitos mínimos que debe cumplir el proyecto para 
 Estado:
 
 ```text
-Pendiente
+Hecho
 ```
+
+Evidencia:
+
+- Notebook: `notebooks/02_modeling.ipynb`
+- Variable objetivo: `FloodProbability`
+- Mejor modelo baseline: `Linear Regression`
 
 Checklist:
 
 - Separar variables predictoras `X` y variable objetivo `y`.
 - Eliminar columnas no predictivas como `id`.
 - Crear conjunto de entrenamiento y validación.
-- Entrenar al menos un modelo baseline.
+- Entrenar modelos baseline.
 - Generar predicciones.
 - Calcular métricas de regresión.
 
@@ -28,8 +34,12 @@ Checklist:
 Estado:
 
 ```text
-En progreso
+Hecho
 ```
+
+Evidencia:
+
+- Notebook: `notebooks/01_EDA.ipynb`
 
 Checklist:
 
@@ -50,8 +60,14 @@ Checklist:
 Estado:
 
 ```text
-Pendiente
+Hecho
 ```
+
+Evidencia:
+
+| Modelo | R2 Train | R2 Validation | Diferencia | Estado |
+|---|---:|---:|---:|---|
+| Linear Regression | 0.8455 | 0.8449 | 0.077% | Cumple |
 
 Checklist:
 
@@ -59,13 +75,7 @@ Checklist:
 - Calcular métricas en validación.
 - Comparar resultados de train y validation.
 - Calcular diferencia porcentual.
-- Ajustar el modelo si la diferencia supera el 5%.
-
-Ejemplo de tabla esperada:
-
-| Modelo | R2 Train | R2 Validation | Diferencia | Estado |
-|---|---:|---:|---:|---|
-| Random Forest | Pendiente | Pendiente | Pendiente | Pendiente |
+- Verificar que la diferencia es inferior al 5%.
 
 ## 4. Solución productivizada
 
@@ -86,6 +96,12 @@ Checklist:
 - Mostrar la predicción de `FloodProbability`.
 - Documentar cómo ejecutar la aplicación.
 
+Próximo paso:
+
+```text
+Crear app/app.py con Streamlit.
+```
+
 ## 5. Informe del rendimiento del modelo
 
 **Objetivo:** explicar cómo funciona el modelo y evaluar su rendimiento.
@@ -93,16 +109,31 @@ Checklist:
 Estado:
 
 ```text
-Pendiente
+Hecho
 ```
+
+Evidencia:
+
+- Notebook: `notebooks/02_modeling.ipynb`
+- Métricas calculadas: RMSE, MAE y R2.
+- Incluye comparación train/test.
+- Incluye predicción vs valor real.
+- Incluye análisis de residuos.
+- Incluye interpretación mediante coeficientes del modelo lineal.
+
+Resultados principales:
+
+| Modelo | RMSE Validation | MAE Validation | R2 Validation | Overfitting R2 |
+|---|---:|---:|---:|---:|
+| Linear Regression | 0.0201 | 0.0158 | 0.8449 | 0.077% |
 
 Checklist:
 
 - Calcular RMSE.
 - Calcular MAE.
 - Calcular R2.
-- Comparar modelos si se entrena más de uno.
-- Incluir feature importance.
+- Comparar modelos.
+- Incluir feature importance o interpretación equivalente.
 - Incluir gráfico de predicción vs valor real.
 - Incluir análisis de residuos.
 - Explicar fortalezas y limitaciones del modelo.
@@ -111,25 +142,20 @@ Checklist:
 
 | Requisito | Estado |
 |---|---|
-| Modelo funcional | Pendiente |
-| EDA con visualizaciones | En progreso |
-| Overfitting inferior al 5% | Pendiente |
+| Modelo funcional | Hecho |
+| EDA con visualizaciones | Hecho |
+| Overfitting inferior al 5% | Hecho |
 | App productivizada | Pendiente |
-| Informe de rendimiento | Pendiente |
+| Informe de rendimiento | Hecho |
 
 ## Próximo paso recomendado
 
-Una vez completado el EDA, el siguiente paso es preparar el notebook de modelado:
+El único requisito pendiente del Nivel Esencial es la productivización del modelo.
+
+El siguiente paso es crear:
 
 ```text
-notebooks/02_modeling.ipynb
+app/app.py
 ```
 
-Este notebook debería incluir:
-
-- separación de `X` e `y`,
-- train/validation split,
-- modelo baseline,
-- métricas RMSE, MAE y R2,
-- comparación train vs validation,
-- análisis de overfitting.
+La aplicación deberá cargar el modelo guardado, permitir introducir valores para las variables predictoras y mostrar la predicción de `FloodProbability`.
