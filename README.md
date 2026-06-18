@@ -1,5 +1,3 @@
-# Proyecto-4--Grupo-1
-Proyecto Regression 
 # Proyecto 4 - Grupo 1
 
 Proyecto grupal de Machine Learning orientado a resolver un problema de regresion usando el dataset **Regression with a Flood Prediction Dataset** de Kaggle.
