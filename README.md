@@ -1,11 +1,10 @@
 # Proyecto 4 - Grupo 1
 
-<p>
-  <span style="color: #0969da;"><strong>Machine Learning</strong></span> ·
-  <span style="color: #1a7f37;"><strong>Regresión</strong></span> ·
-  <span style="color: #8250df;"><strong>Kaggle</strong></span> ·
-  <span style="color: #9a6700;"><strong>Streamlit pendiente</strong></span>
-</p>
+![Python](https://img.shields.io/badge/Python-3.11-3776AB?style=for-the-badge&logo=python&logoColor=white)
+![Machine Learning](https://img.shields.io/badge/Machine%20Learning-Regresi%C3%B3n-1A7F37?style=for-the-badge)
+![Dataset](https://img.shields.io/badge/Dataset-Kaggle-20BEFF?style=for-the-badge&logo=kaggle&logoColor=white)
+![Modelo](https://img.shields.io/badge/Modelo-Linear%20Regression-8250DF?style=for-the-badge)
+![Estado](https://img.shields.io/badge/Nivel%20Esencial-Casi%20completo-9A6700?style=for-the-badge)
 
 Proyecto grupal de Machine Learning orientado a resolver un problema de regresión usando el dataset **Regression with a Flood Prediction Dataset** de Kaggle.
 
@@ -112,8 +111,8 @@ pip install -r requirements.txt
 
 | Notebook | Contenido | Estado |
 |---|---|---|
-| `notebooks/01_EDA.ipynb` | Carga, revisión inicial, visualizaciones y conclusiones del EDA | <span style="color: #1a7f37;"><strong>Hecho</strong></span> |
-| `notebooks/02_modeling.ipynb` | Modelado baseline, métricas, overfitting, residuos e interpretación | <span style="color: #1a7f37;"><strong>Hecho</strong></span> |
+| `notebooks/01_EDA.ipynb` | Carga, revisión inicial, visualizaciones y conclusiones del EDA | ![Hecho](https://img.shields.io/badge/Hecho-1A7F37?style=flat-square) |
+| `notebooks/02_modeling.ipynb` | Modelado baseline, métricas, overfitting, residuos e interpretación | ![Hecho](https://img.shields.io/badge/Hecho-1A7F37?style=flat-square) |
 
 ### `01_EDA.ipynb`
 
@@ -145,11 +144,11 @@ Incluye:
 
 | Requisito | Estado | Evidencia |
 |---|---|---|
-| Modelo funcional de regresión | <span style="color: #1a7f37;"><strong>Hecho</strong></span> | `notebooks/02_modeling.ipynb` |
-| EDA con visualizaciones | <span style="color: #1a7f37;"><strong>Hecho</strong></span> | `notebooks/01_EDA.ipynb` |
-| Overfitting inferior al 5% | <span style="color: #1a7f37;"><strong>Hecho</strong></span> | 0.077% |
-| Informe de rendimiento | <span style="color: #1a7f37;"><strong>Hecho</strong></span> | Métricas, residuos, predicción vs real |
-| App productivizada | <span style="color: #9a6700;"><strong>Pendiente</strong></span> | `app/app.py` |
+| Modelo funcional de regresión | ![Hecho](https://img.shields.io/badge/Hecho-1A7F37?style=flat-square) | `notebooks/02_modeling.ipynb` |
+| EDA con visualizaciones | ![Hecho](https://img.shields.io/badge/Hecho-1A7F37?style=flat-square) | `notebooks/01_EDA.ipynb` |
+| Overfitting inferior al 5% | ![Hecho](https://img.shields.io/badge/Hecho-1A7F37?style=flat-square) | 0.077% |
+| Informe de rendimiento | ![Hecho](https://img.shields.io/badge/Hecho-1A7F37?style=flat-square) | Métricas, residuos, predicción vs real |
+| App productivizada | ![Pendiente](https://img.shields.io/badge/Pendiente-9A6700?style=flat-square) | `app/app.py` |
 
 ## Resultado baseline
 
