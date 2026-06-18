@@ -8,16 +8,16 @@
 
 Proyecto grupal de Machine Learning orientado a resolver un problema de regresión usando el dataset **Regression with a Flood Prediction Dataset** de Kaggle.
 
-## Resumen
+## Vista rápida
 
-| Campo | Descripción |
+| Área | Estado |
 |---|---|
 | Problema | Predicción de probabilidad de inundación |
 | Tipo de modelo | Regresión |
 | Variable objetivo | `FloodProbability` |
 | Dataset | Regression with a Flood Prediction Dataset |
 | Fuente | Kaggle |
-| Estado Nivel Esencial | Casi completo |
+| Nivel Esencial | ![Casi completo](https://img.shields.io/badge/Casi%20completo-9A6700?style=flat-square) |
 | Pendiente principal | App productivizada con Streamlit |
 
 ## Objetivo
@@ -116,31 +116,13 @@ pip install -r requirements.txt
 
 ### `01_EDA.ipynb`
 
-Incluye:
-
-- carga y revisión inicial del dataset,
-- análisis de nulos y duplicados,
-- análisis de la variable objetivo,
-- visualizaciones relevantes para regresión,
-- correlaciones,
-- conclusiones del EDA.
+Incluye carga del dataset, revisión inicial, análisis de nulos y duplicados, distribución de la variable objetivo, visualizaciones relevantes para regresión, correlaciones y conclusiones del EDA.
 
 ### `02_modeling.ipynb`
 
-Incluye:
+Incluye separación de variables predictoras y objetivo, train/test split, entrenamiento de modelos baseline, métricas RMSE, MAE y R2, control de overfitting, gráficos de predicción vs valor real, análisis de residuos, interpretación mediante coeficientes y guardado del modelo baseline.
 
-- separación de variables predictoras y variable objetivo,
-- train/test split,
-- entrenamiento de modelos baseline,
-- métricas RMSE, MAE y R2,
-- comparación train/test,
-- cálculo de overfitting,
-- gráfico de predicción vs valor real,
-- análisis de residuos,
-- interpretación mediante coeficientes,
-- guardado del modelo baseline.
-
-## Estado actual del Nivel Esencial
+## Estado del Nivel Esencial
 
 | Requisito | Estado | Evidencia |
 |---|---|---|
@@ -169,6 +151,16 @@ app/app.py
 ```
 
 con Streamlit, para cargar el modelo entrenado y permitir obtener predicciones de `FloodProbability` desde una interfaz sencilla.
+
+## Documentación del proyecto
+
+| Documento | Contenido |
+|---|---|
+| `docs/dataset.md` | Información del dataset y archivos necesarios |
+| `docs/project_management/github_workflow.md` | Flujo de trabajo con ramas, commits y Pull Requests |
+| `docs/project_management/essential_level_checklist.md` | Seguimiento del Nivel Esencial |
+| `docs/project_management/streamlit_plan.md` | Plan para construir la app de Streamlit |
+| `docs/dailies/` | Registro de reuniones diarias |
 
 ## Flujo de trabajo
 

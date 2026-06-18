@@ -1,5 +1,10 @@
 # Flujo de Trabajo con GitHub
 
+![Rama estable](https://img.shields.io/badge/main-estable-0969DA?style=for-the-badge)
+![Desarrollo](https://img.shields.io/badge/dev-desarrollo-1A7F37?style=for-the-badge)
+![Pull Requests](https://img.shields.io/badge/PR-obligatorio-8250DF?style=for-the-badge)
+![Datasets](https://img.shields.io/badge/CSV-no%20subir-9A6700?style=for-the-badge)
+
 ## Objetivo
 
 Este documento define cómo trabajará el equipo con GitHub durante el proyecto.
@@ -8,20 +13,17 @@ El objetivo es evitar conflictos, mantener una rama estable y asegurar que los c
 
 ## Ramas principales
 
-El proyecto utiliza dos ramas principales:
-
-```text
-main
-dev
-```
+| Rama | Uso | Regla |
+|---|---|---|
+| `main` | Versión estable del proyecto | No se trabaja directamente aquí |
+| `dev` | Rama principal de desarrollo | Recibe los Pull Requests del equipo |
+| ramas de tarea | Trabajo individual o por bloque | Siempre nacen desde `dev` |
 
 ## Rama `main`
 
 La rama `main` se reserva para versiones estables del proyecto.
 
-No se trabajará directamente sobre `main`.
-
-Al final del proyecto, cuando `dev` tenga una versión completa y revisada, se podrá crear un Pull Request de:
+No se trabajará directamente sobre `main`. Al final del proyecto, cuando `dev` tenga una versión completa y revisada, se podrá crear un Pull Request de:
 
 ```text
 dev -> main
@@ -45,15 +47,15 @@ tipo/descripcion-breve
 
 Tipos recomendados:
 
-```text
-docs/      documentación
-data/      dataset, limpieza o EDA
-notebook/  notebooks
-model/     modelado y métricas
-app/       aplicación Streamlit
-fix/       correcciones
-chore/     estructura o configuración
-```
+| Tipo | Uso |
+|---|---|
+| `docs/` | Documentación |
+| `data/` | Dataset, limpieza o EDA |
+| `notebook/` | Notebooks |
+| `model/` | Modelado y métricas |
+| `app/` | Aplicación Streamlit |
+| `fix/` | Correcciones |
+| `chore/` | Estructura o configuración |
 
 Ejemplos:
 
@@ -89,7 +91,7 @@ git status
 Añadir cambios:
 
 ```bash
-git add .
+git add archivo-o-carpeta
 ```
 
 Crear commit:
@@ -121,7 +123,7 @@ compare: tipo/descripcion-breve
 - No subir datasets pesados al repositorio.
 - No mezclar cambios no relacionados en el mismo Pull Request.
 
-## Cuando un PR se mergea
+## Después de mergear un PR
 
 Después de que un Pull Request se haya mergeado en `dev`, cada integrante debe actualizar su rama local:
 
