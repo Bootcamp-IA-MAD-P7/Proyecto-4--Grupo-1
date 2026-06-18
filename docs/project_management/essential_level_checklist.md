@@ -1,10 +1,10 @@
 # Checklist Nivel Esencial
 
-Este documento resume los requisitos minimos que debe cumplir el proyecto para alcanzar el Nivel Esencial.
+Este documento resume los requisitos mínimos que debe cumplir el proyecto para alcanzar el Nivel Esencial.
 
 ## 1. Modelo de ML funcional
 
-**Objetivo:** entrenar al menos un modelo capaz de predecir una variable numerica.
+**Objetivo:** entrenar al menos un modelo capaz de predecir una variable numérica.
 
 Estado:
 
@@ -16,14 +16,14 @@ Checklist:
 
 - Separar variables predictoras `X` y variable objetivo `y`.
 - Eliminar columnas no predictivas como `id`.
-- Crear conjunto de entrenamiento y validacion.
+- Crear conjunto de entrenamiento y validación.
 - Entrenar al menos un modelo baseline.
 - Generar predicciones.
-- Calcular metricas de regresion.
+- Calcular métricas de regresión.
 
-## 2. Analisis exploratorio de datos
+## 2. Análisis exploratorio de datos
 
-**Objetivo:** analizar los datos con visualizaciones relevantes para regresion.
+**Objetivo:** analizar los datos con visualizaciones relevantes para regresión.
 
 Estado:
 
@@ -33,19 +33,19 @@ En progreso
 
 Checklist:
 
-- Carga y revision inicial del dataset.
-- Revision de dimensiones, tipos de datos, nulos y duplicados.
-- Distribucion de la variable objetivo `FloodProbability`.
-- Matriz de correlacion.
+- Carga y revisión inicial del dataset.
+- Revisión de dimensiones, tipos de datos, nulos y duplicados.
+- Distribución de la variable objetivo `FloodProbability`.
+- Matriz de correlación.
 - Correlaciones con la variable objetivo.
 - Scatter plots entre variables relevantes y target.
 - Histogramas de variables predictoras.
-- Boxplots para revisar dispersion y posibles outliers.
+- Boxplots para revisar dispersión y posibles outliers.
 - Conclusiones escritas del EDA.
 
 ## 3. Overfitting inferior al 5%
 
-**Objetivo:** comprobar que la diferencia entre entrenamiento y validacion es aceptable.
+**Objetivo:** comprobar que la diferencia entre entrenamiento y validación es aceptable.
 
 Estado:
 
@@ -55,8 +55,8 @@ Pendiente
 
 Checklist:
 
-- Calcular metricas en entrenamiento.
-- Calcular metricas en validacion.
+- Calcular métricas en entrenamiento.
+- Calcular métricas en validación.
 - Comparar resultados de train y validation.
 - Calcular diferencia porcentual.
 - Ajustar el modelo si la diferencia supera el 5%.
@@ -67,9 +67,9 @@ Ejemplo de tabla esperada:
 |---|---:|---:|---:|---|
 | Random Forest | Pendiente | Pendiente | Pendiente | Pendiente |
 
-## 4. Solucion productivizada
+## 4. Solución productivizada
 
-**Objetivo:** crear una aplicacion para usar el modelo fuera del notebook.
+**Objetivo:** crear una aplicación para usar el modelo fuera del notebook.
 
 Estado:
 
@@ -80,15 +80,15 @@ Pendiente
 Checklist:
 
 - Guardar el modelo entrenado.
-- Crear aplicacion con Streamlit, Gradio, Dash o API.
+- Crear aplicación con Streamlit, Gradio, Dash o API.
 - Cargar el modelo desde la app.
 - Permitir introducir valores de entrada.
-- Mostrar la prediccion de `FloodProbability`.
-- Documentar como ejecutar la aplicacion.
+- Mostrar la predicción de `FloodProbability`.
+- Documentar cómo ejecutar la aplicación.
 
 ## 5. Informe del rendimiento del modelo
 
-**Objetivo:** explicar como funciona el modelo y evaluar su rendimiento.
+**Objetivo:** explicar cómo funciona el modelo y evaluar su rendimiento.
 
 Estado:
 
@@ -101,10 +101,10 @@ Checklist:
 - Calcular RMSE.
 - Calcular MAE.
 - Calcular R2.
-- Comparar modelos si se entrena mas de uno.
+- Comparar modelos si se entrena más de uno.
 - Incluir feature importance.
-- Incluir grafico de prediccion vs valor real.
-- Incluir analisis de residuos.
+- Incluir gráfico de predicción vs valor real.
+- Incluir análisis de residuos.
 - Explicar fortalezas y limitaciones del modelo.
 
 ## Resumen de estado
@@ -117,7 +117,7 @@ Checklist:
 | App productivizada | Pendiente |
 | Informe de rendimiento | Pendiente |
 
-## Proximo paso recomendado
+## Próximo paso recomendado
 
 Una vez completado el EDA, el siguiente paso es preparar el notebook de modelado:
 
@@ -125,11 +125,11 @@ Una vez completado el EDA, el siguiente paso es preparar el notebook de modelado
 notebooks/02_modeling.ipynb
 ```
 
-Este notebook deberia incluir:
+Este notebook debería incluir:
 
-- separacion de `X` e `y`,
+- separación de `X` e `y`,
 - train/validation split,
 - modelo baseline,
-- metricas RMSE, MAE y R2,
-- comparacion train vs validation,
-- analisis de overfitting.
+- métricas RMSE, MAE y R2,
+- comparación train vs validation,
+- análisis de overfitting.
