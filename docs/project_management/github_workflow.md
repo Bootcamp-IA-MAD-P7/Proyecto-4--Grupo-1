@@ -2,7 +2,7 @@
 
 ## Objetivo
 
-Este documento define como trabajara el equipo con GitHub durante el proyecto.
+Este documento define cómo trabajará el equipo con GitHub durante el proyecto.
 
 El objetivo es evitar conflictos, mantener una rama estable y asegurar que los cambios importantes sean revisados antes de integrarse.
 
@@ -19,9 +19,9 @@ dev
 
 La rama `main` se reserva para versiones estables del proyecto.
 
-No se trabajara directamente sobre `main`.
+No se trabajará directamente sobre `main`.
 
-Al final del proyecto, cuando `dev` tenga una version completa y revisada, se podra crear un Pull Request de:
+Al final del proyecto, cuando `dev` tenga una versión completa y revisada, se podrá crear un Pull Request de:
 
 ```text
 dev -> main
@@ -31,7 +31,7 @@ dev -> main
 
 La rama `dev` es la rama principal de desarrollo del equipo.
 
-Todas las tareas se integraran primero en `dev` mediante Pull Request.
+Todas las tareas se integrarán primero en `dev` mediante Pull Request.
 
 ## Ramas de trabajo
 
@@ -46,13 +46,13 @@ tipo/descripcion-breve
 Tipos recomendados:
 
 ```text
-docs/      documentacion
+docs/      documentación
 data/      dataset, limpieza o EDA
 notebook/  notebooks
-model/     modelado y metricas
-app/       aplicacion Streamlit
+model/     modelado y métricas
+app/       aplicación Streamlit
 fix/       correcciones
-chore/     estructura o configuracion
+chore/     estructura o configuración
 ```
 
 Ejemplos:
@@ -86,7 +86,7 @@ Trabajar en los cambios y revisar el estado:
 git status
 ```
 
-Anadir cambios:
+Añadir cambios:
 
 ```bash
 git add .
@@ -95,7 +95,7 @@ git add .
 Crear commit:
 
 ```bash
-git commit -m "tipo: descripcion del cambio"
+git commit -m "tipo: descripción del cambio"
 ```
 
 Subir la rama:
@@ -123,7 +123,7 @@ compare: tipo/descripcion-breve
 
 ## Cuando un PR se mergea
 
-Despues de que un Pull Request se haya mergeado en `dev`, cada integrante debe actualizar su rama local:
+Después de que un Pull Request se haya mergeado en `dev`, cada integrante debe actualizar su rama local:
 
 ```bash
 git checkout dev
@@ -136,7 +136,7 @@ Si la rama de trabajo ya no se necesita, puede eliminarse:
 git branch -d nombre-rama
 ```
 
-Si GitHub no la elimina automaticamente, tambien puede borrarse del remoto:
+Si GitHub no la elimina automáticamente, también puede borrarse del remoto:
 
 ```bash
 git push origin --delete nombre-rama
@@ -146,8 +146,8 @@ git push origin --delete nombre-rama
 
 Una tarea se puede cerrar cuando:
 
-- El trabajo esta terminado.
-- El codigo o documentacion esta subido a GitHub.
+- El trabajo está terminado.
+- El código o documentación está subido a GitHub.
 - El Pull Request ha sido revisado.
 - El Pull Request ha sido mergeado en `dev`.
 - No quedan cambios pendientes relacionados con esa tarea.
