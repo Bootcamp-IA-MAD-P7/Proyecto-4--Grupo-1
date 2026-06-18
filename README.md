@@ -21,7 +21,17 @@ Los archivos del dataset deben descargarse desde Kaggle y colocarse localmente e
 data/raw/
 ```
 
-Por defecto, los CSV no se suben al repositorio para evitar incluir datos pesados.
+Estructura esperada:
+
+```text
+data/
+`-- raw/
+    |-- train.csv
+    |-- test.csv
+    `-- sample_submission.csv
+```
+
+Los CSV no se suben al repositorio para evitar incluir archivos pesados. Kaggle se mantiene como fuente oficial de los datos.
 
 ## Estructura del proyecto
 
@@ -56,17 +66,105 @@ Proyecto-4--Grupo-1/
 - Seaborn
 - Optuna
 - Streamlit
+- Joblib
 
 ## Instalación
 
-Crear un entorno virtual e instalar dependencias:
+Crear un entorno virtual:
+
+```bash
+python -m venv .venv
+```
+
+Activarlo en Windows con Git Bash:
+
+```bash
+source .venv/Scripts/activate
+```
+
+Instalar dependencias:
 
 ```bash
 pip install -r requirements.txt
 ```
 
-## Estado actual
+## Notebooks
 
-- Dataset seleccionado.
-- EDA inicial en preparación.
-- Pendiente: modelado baseline, evaluación, control de overfitting y app de Streamlit.
+Los notebooks principales del proyecto son:
+
+```text
+notebooks/01_EDA.ipynb
+notebooks/02_modeling.ipynb
+```
+
+### 01_EDA.ipynb
+
+Incluye:
+
+- carga y revisión inicial del dataset,
+- análisis de nulos y duplicados,
+- análisis de la variable objetivo,
+- visualizaciones relevantes para regresión,
+- correlaciones,
+- conclusiones del EDA.
+
+### 02_modeling.ipynb
+
+Incluye:
+
+- separación de variables predictoras y variable objetivo,
+- train/test split,
+- entrenamiento de modelos baseline,
+- métricas RMSE, MAE y R2,
+- comparación train/test,
+- cálculo de overfitting,
+- gráfico de predicción vs valor real,
+- análisis de residuos,
+- interpretación mediante coeficientes,
+- guardado del modelo baseline.
+
+## Estado actual del Nivel Esencial
+
+| Requisito | Estado |
+|---|---|
+| Modelo funcional de regresión | Hecho |
+| EDA con visualizaciones | Hecho |
+| Overfitting inferior al 5% | Hecho |
+| Informe de rendimiento | Hecho |
+| App productivizada | Pendiente |
+
+## Resultado baseline
+
+El mejor modelo baseline identificado hasta el momento es `Linear Regression`.
+
+Resultados principales:
+
+| Modelo | RMSE Validation | MAE Validation | R2 Validation | Overfitting R2 |
+|---|---:|---:|---:|---:|
+| Linear Regression | 0.0201 | 0.0158 | 0.8449 | 0.077% |
+
+## Próximo paso
+
+El requisito pendiente del Nivel Esencial es la productivización del modelo.
+
+La siguiente tarea será crear:
+
+```text
+app/app.py
+```
+
+con Streamlit, para cargar el modelo entrenado y permitir obtener predicciones de `FloodProbability` desde una interfaz sencilla.
+
+## Flujo de trabajo
+
+El equipo trabaja con:
+
+```text
+main
+dev
+ramas de tarea
+```
+
+La rama `dev` se utiliza como rama principal de desarrollo. Los cambios se integran mediante Pull Requests hacia `dev`.
+
+La rama `main` se reserva para versiones estables del proyecto.
