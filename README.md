@@ -1,19 +1,40 @@
 # Proyecto 4 - Grupo 1
 
+<p>
+  <span style="color: #0969da;"><strong>Machine Learning</strong></span> ·
+  <span style="color: #1a7f37;"><strong>Regresión</strong></span> ·
+  <span style="color: #8250df;"><strong>Kaggle</strong></span> ·
+  <span style="color: #9a6700;"><strong>Streamlit pendiente</strong></span>
+</p>
+
 Proyecto grupal de Machine Learning orientado a resolver un problema de regresión usando el dataset **Regression with a Flood Prediction Dataset** de Kaggle.
+
+## Resumen
+
+| Campo | Descripción |
+|---|---|
+| Problema | Predicción de probabilidad de inundación |
+| Tipo de modelo | Regresión |
+| Variable objetivo | `FloodProbability` |
+| Dataset | Regression with a Flood Prediction Dataset |
+| Fuente | Kaggle |
+| Estado Nivel Esencial | Casi completo |
+| Pendiente principal | App productivizada con Streamlit |
 
 ## Objetivo
 
-El objetivo del proyecto es construir un modelo capaz de predecir la variable numérica `FloodProbability`, que representa la probabilidad estimada de inundación a partir de diferentes factores de riesgo.
+Construir un modelo capaz de predecir la variable numérica `FloodProbability`, que representa la probabilidad estimada de inundación a partir de diferentes factores de riesgo.
 
 ## Dataset
 
-- Fuente: Kaggle
-- Competición: Regression with a Flood Prediction Dataset
-- URL: https://www.kaggle.com/competitions/playground-series-s4e5
-- Archivo principal para EDA y entrenamiento: `train.csv`
-- Variable objetivo: `FloodProbability`
-- Tipo de problema: Regresión
+| Elemento | Valor |
+|---|---|
+| Fuente | Kaggle |
+| Competición | Regression with a Flood Prediction Dataset |
+| URL | https://www.kaggle.com/competitions/playground-series-s4e5 |
+| Archivo principal | `train.csv` |
+| Variable objetivo | `FloodProbability` |
+| Tipo de problema | Regresión |
 
 Los archivos del dataset deben descargarse desde Kaggle y colocarse localmente en:
 
@@ -57,16 +78,15 @@ Proyecto-4--Grupo-1/
 
 ## Tecnologías
 
-- Python
-- Jupyter Notebook / Google Colab
-- Pandas
-- NumPy
-- Scikit-learn
-- Matplotlib
-- Seaborn
-- Optuna
-- Streamlit
-- Joblib
+| Área | Herramientas |
+|---|---|
+| Análisis de datos | Pandas, NumPy |
+| Visualización | Matplotlib, Seaborn |
+| Machine Learning | Scikit-learn |
+| Optimización | Optuna |
+| Productivización | Streamlit |
+| Persistencia de modelo | Joblib |
+| Entorno de trabajo | Jupyter Notebook, Google Colab, VS Code |
 
 ## Instalación
 
@@ -90,14 +110,12 @@ pip install -r requirements.txt
 
 ## Notebooks
 
-Los notebooks principales del proyecto son:
+| Notebook | Contenido | Estado |
+|---|---|---|
+| `notebooks/01_EDA.ipynb` | Carga, revisión inicial, visualizaciones y conclusiones del EDA | <span style="color: #1a7f37;"><strong>Hecho</strong></span> |
+| `notebooks/02_modeling.ipynb` | Modelado baseline, métricas, overfitting, residuos e interpretación | <span style="color: #1a7f37;"><strong>Hecho</strong></span> |
 
-```text
-notebooks/01_EDA.ipynb
-notebooks/02_modeling.ipynb
-```
-
-### 01_EDA.ipynb
+### `01_EDA.ipynb`
 
 Incluye:
 
@@ -108,7 +126,7 @@ Incluye:
 - correlaciones,
 - conclusiones del EDA.
 
-### 02_modeling.ipynb
+### `02_modeling.ipynb`
 
 Incluye:
 
@@ -125,19 +143,17 @@ Incluye:
 
 ## Estado actual del Nivel Esencial
 
-| Requisito | Estado |
-|---|---|
-| Modelo funcional de regresión | Hecho |
-| EDA con visualizaciones | Hecho |
-| Overfitting inferior al 5% | Hecho |
-| Informe de rendimiento | Hecho |
-| App productivizada | Pendiente |
+| Requisito | Estado | Evidencia |
+|---|---|---|
+| Modelo funcional de regresión | <span style="color: #1a7f37;"><strong>Hecho</strong></span> | `notebooks/02_modeling.ipynb` |
+| EDA con visualizaciones | <span style="color: #1a7f37;"><strong>Hecho</strong></span> | `notebooks/01_EDA.ipynb` |
+| Overfitting inferior al 5% | <span style="color: #1a7f37;"><strong>Hecho</strong></span> | 0.077% |
+| Informe de rendimiento | <span style="color: #1a7f37;"><strong>Hecho</strong></span> | Métricas, residuos, predicción vs real |
+| App productivizada | <span style="color: #9a6700;"><strong>Pendiente</strong></span> | `app/app.py` |
 
 ## Resultado baseline
 
 El mejor modelo baseline identificado hasta el momento es `Linear Regression`.
-
-Resultados principales:
 
 | Modelo | RMSE Validation | MAE Validation | R2 Validation | Overfitting R2 |
 |---|---:|---:|---:|---:|
@@ -145,7 +161,7 @@ Resultados principales:
 
 ## Próximo paso
 
-El requisito pendiente del Nivel Esencial es la productivización del modelo.
+El requisito pendiente del Nivel Esencial es la **productivización del modelo**.
 
 La siguiente tarea será crear:
 
@@ -157,14 +173,10 @@ con Streamlit, para cargar el modelo entrenado y permitir obtener predicciones d
 
 ## Flujo de trabajo
 
-El equipo trabaja con:
+| Rama | Uso |
+|---|---|
+| `main` | Versiones estables |
+| `dev` | Rama principal de desarrollo |
+| ramas de tarea | Cambios concretos mediante Pull Request |
 
-```text
-main
-dev
-ramas de tarea
-```
-
-La rama `dev` se utiliza como rama principal de desarrollo. Los cambios se integran mediante Pull Requests hacia `dev`.
-
-La rama `main` se reserva para versiones estables del proyecto.
+Los cambios se integran mediante Pull Requests hacia `dev`. La rama `main` queda reservada para una versión estable del proyecto.
