@@ -2,6 +2,8 @@ from pathlib import Path
 import streamlit as st
 import pandas as pd
 from paths import get_data_path
+# --- NUEVA IMPORTACIÓN NATIVA PARA GRÁFICOS INTERACTIVOS ---
+from pygwalker.api.streamlit import StreamlitRenderer
 
 # --- rutas base ---
 BASE = Path(__file__).parent        # app/
@@ -10,7 +12,7 @@ DATA_PATH = get_data_path("train.csv")
 
 st.set_page_config(page_title="Análisis de inundaciones", layout="wide")
 st.title("Análisis de inundaciones")
-st.write("Esta app muestra notebooks ejecutados y convertidos a HTML.")
+st.write("Esta app muestra notebooks ejecutados y el explorador interactivo de datos.")
 
 # Cargar CSS desde style.css (app/style.css)
 css_path = BASE / "style.css"
@@ -54,7 +56,6 @@ hr { border-color: rgba(255,255,255,0.25) !important; }
 """
 
 def inject_overrides(html: str) -> str:
-    # Inserta overrides dentro de <head> si existe; si no, al final del body; si no, al final.
     if "</head>" in html:
         return html.replace("</head>", OVERRIDE_CSS + "\n</head>", 1)
     if "<head>" in html:
@@ -81,10 +82,10 @@ if files:
     )
     choice = choice_name
 
-# Sidebar controls (ejemplo)
+# Sidebar controls
 st.sidebar.header("Configuración")
 _ = st.sidebar.text_input("Tu nombre")
-num_rows = st.sidebar.slider("Número de filas", min_value=5, max_value=100, value=20)
+num_rows = st.sidebar.slider("Número de filas en Preview", min_value=5, max_value=100, value=20)
 
 # --- Notebook / ejecución ---
 import nbformat
@@ -94,7 +95,6 @@ from nbconvert import HTMLExporter
 def run_notebook_ipynb(ipynb_path: Path, render_html: bool = True):
     nb = nbformat.read(ipynb_path, as_version=4)
 
-    # Inyecta configuración de rutas para que el notebook lea el CSV correcto
     inject_code = (
         "from pathlib import Path\n"
         f"DATA_PATH = Path({repr(str(DATA_PATH))})\n"
@@ -121,9 +121,7 @@ def run_notebook_ipynb(ipynb_path: Path, render_html: bool = True):
     body = inject_overrides(body)
     return body
 
-# =========================================================
-# Ejecutar notebook “fijo” si existe tu_notebook.ipynb (sin renderizar HTML)
-# =========================================================
+# Ejecutar notebook "fijo"
 tu_notebook_path = PROJECT_ROOT / "notebooks" / "tu_notebook.ipynb"
 if tu_notebook_path.exists():
     try:
@@ -151,8 +149,6 @@ else:
         out_file.write_text(body, encoding="utf-8")
 
         st.success("Ejecución completada")
-
-        # IMPORTANTÍSIMO: render único con CSS del tema + override ya embebido en el HTML
         st.components.v1.html(THEME_CSS + body, height=800, scrolling=True)
 
 # --- Si eligió un HTML ya convertido, mostrarlo ---
@@ -163,10 +159,34 @@ if choice:
     st.markdown("### Vista (HTML convertido)")
     st.components.v1.html(THEME_CSS + html, height=800, scrolling=True)
 
+
+# =========================================================
+# --- NUEVA ESTRATEGIA: VISUALIZACIÓN INTERACTIVA ON-DEMAND ---
+# =========================================================
+st.markdown("---")
+st.markdown("### 📊 Exploración de Gráficos Interactivos (On-Demand)")
+
+if DATA_PATH.exists():
+    # Cargamos el DataFrame principal de inundaciones
+    df_inundaciones = pd.read_csv(DATA_PATH)
+    
+    # Creamos y cacheamos la interfaz gráfica nativa de PyGWalker para que rinda rápido
+    @st.cache_resource
+    def get_pyg_renderer(_df):
+        # Almacena las configuraciones de los gráficos en la carpeta cache del proyecto
+        config_path = BASE / "cache" / "viz_config.json"
+        return StreamlitRenderer(_df, spec=str(config_path), spec_type="json")
+    
+    renderer = get_pyg_renderer(df_inundaciones)
+    
+    # Renderizamos la interfaz interactiva oficial sin usar contenedores HTML rotos
+    renderer.explorer()
+else:
+    st.error(f"No se pudo cargar el visualizador interactivo porque falta: {DATA_PATH}")
+
+
 # --- Preview del dataset ---
+st.markdown("---")
 st.markdown("### Preview del dataset")
 if DATA_PATH.exists():
-    df_preview = pd.read_csv(DATA_PATH)
-    st.dataframe(df_preview.head(num_rows))
-else:
-    st.error(f"No se encontró el archivo: {DATA_PATH}")
+    st.dataframe(df_preview.head(num_rows) if 'df_preview' in locals() else df_inundaciones.head(num_rows))
