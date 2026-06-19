@@ -25,7 +25,7 @@ nombre_usuario = st.sidebar.text_input("Consultor a cargo:", value="Estudiante")
 st.sidebar.markdown("---")
 st.sidebar.subheader("⚙️ Configuración de Datos")
 
-# 2. Control interactivo de filas (El slider/number input que querías recuperar)
+# 2. Control interactivo de filas
 num_rows = st.sidebar.slider(
     "Filas a cargar en la vista rápida:", 
     min_value=5, 
@@ -33,6 +33,53 @@ num_rows = st.sidebar.slider(
     value=50, 
     step=5
 )
+
+st.sidebar.markdown("---")
+st.sidebar.subheader("♿ Accesibilidad")
+
+# 3. BOTÓN/SELECTOR DE ACCESIBILIDAD
+# Creamos un menú desplegable para que elijan el modo de vista
+modo_vista = st.sidebar.selectbox(
+    "Modo de visualización:",
+    options=["Estándar", "Texto Grande 🔍", "Alto Contraste 🌗"]
+)
+
+# Aplicamos la "magia" de accesibilidad inyectando CSS según lo que elijan
+if modo_vista == "Texto Grande 🔍":
+    st.markdown(
+        """
+        <style>
+        html, body, [class*="st-"] {
+            font-size: 24px !important; /* Agranda la letra de toda la app */
+        }
+        h1 { font-size: 3.5rem !important; }
+        h2 { font-size: 2.8rem !important; }
+        h3 { font-size: 2.2rem !important; }
+        p, span, label { font-size: 1.3rem !important; }
+        </style>
+        """,
+        unsafe_allow_html=True
+    )
+elif modo_vista == "Alto Contraste 🌗":
+    st.markdown(
+        """
+        <style>
+        /* Forzamos fondo negro y textos amarillos/blancos hiper-legibles */
+        .stApp {
+            background-color: #000000 !important;
+            color: #FFFFFF !important;
+        }
+        h1, h2, h3, p, span, label, strong {
+            color: #FFFF00 !important; /* Texto amarillo sobre fondo negro, estándar de accesibilidad */
+        }
+        /* Ajuste para tarjetas y bloques de texto */
+        div[data-testid="stMarkdownContainer"] p {
+            color: #FFFF00 !important;
+        }
+        </style>
+        """,
+        unsafe_allow_html=True
+    )
 
 # =====================================================================
 # ENCABEZADO DE NEGOCIO (Cuerpo principal)
@@ -125,3 +172,4 @@ if DATA_PATH.exists():
         components.html(pyg_html, height=800, scrolling=True)
 else:
     st.error(f"No se encontró el archivo de datos en: {DATA_PATH}")
+
