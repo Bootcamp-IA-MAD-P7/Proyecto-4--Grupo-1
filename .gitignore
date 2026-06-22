@@ -11,6 +11,8 @@ env/
 data/raw/*.csv
 data/raw/*.zip
 data/processed/*.csv
+data/feedback/*.csv
+data/new_data/*.csv
 
 models/*.pkl
 models/*.joblib

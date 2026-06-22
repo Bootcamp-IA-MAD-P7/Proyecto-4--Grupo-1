@@ -1,135 +1,86 @@
 # Checklist Nivel Esencial
 
-Este documento resume los requisitos mínimos que debe cumplir el proyecto para alcanzar el Nivel Esencial.
-
-## 1. Modelo de ML funcional
-
-**Objetivo:** entrenar al menos un modelo capaz de predecir una variable numérica.
-
-Estado:
-
-```text
-Pendiente
-```
-
-Checklist:
-
-- Separar variables predictoras `X` y variable objetivo `y`.
-- Eliminar columnas no predictivas como `id`.
-- Crear conjunto de entrenamiento y validación.
-- Entrenar al menos un modelo baseline.
-- Generar predicciones.
-- Calcular métricas de regresión.
-
-## 2. Análisis exploratorio de datos
-
-**Objetivo:** analizar los datos con visualizaciones relevantes para regresión.
-
-Estado:
-
-```text
-En progreso
-```
-
-Checklist:
-
-- Carga y revisión inicial del dataset.
-- Revisión de dimensiones, tipos de datos, nulos y duplicados.
-- Distribución de la variable objetivo `FloodProbability`.
-- Matriz de correlación.
-- Correlaciones con la variable objetivo.
-- Scatter plots entre variables relevantes y target.
-- Histogramas de variables predictoras.
-- Boxplots para revisar dispersión y posibles outliers.
-- Conclusiones escritas del EDA.
-
-## 3. Overfitting inferior al 5%
-
-**Objetivo:** comprobar que la diferencia entre entrenamiento y validación es aceptable.
-
-Estado:
-
-```text
-Pendiente
-```
-
-Checklist:
-
-- Calcular métricas en entrenamiento.
-- Calcular métricas en validación.
-- Comparar resultados de train y validation.
-- Calcular diferencia porcentual.
-- Ajustar el modelo si la diferencia supera el 5%.
-
-Ejemplo de tabla esperada:
-
-| Modelo | R2 Train | R2 Validation | Diferencia | Estado |
-|---|---:|---:|---:|---|
-| Random Forest | Pendiente | Pendiente | Pendiente | Pendiente |
-
-## 4. Solución productivizada
-
-**Objetivo:** crear una aplicación para usar el modelo fuera del notebook.
-
-Estado:
-
-```text
-Pendiente
-```
-
-Checklist:
-
-- Guardar el modelo entrenado.
-- Crear aplicación con Streamlit, Gradio, Dash o API.
-- Cargar el modelo desde la app.
-- Permitir introducir valores de entrada.
-- Mostrar la predicción de `FloodProbability`.
-- Documentar cómo ejecutar la aplicación.
-
-## 5. Informe del rendimiento del modelo
-
-**Objetivo:** explicar cómo funciona el modelo y evaluar su rendimiento.
-
-Estado:
-
-```text
-Pendiente
-```
-
-Checklist:
-
-- Calcular RMSE.
-- Calcular MAE.
-- Calcular R2.
-- Comparar modelos si se entrena más de uno.
-- Incluir feature importance.
-- Incluir gráfico de predicción vs valor real.
-- Incluir análisis de residuos.
-- Explicar fortalezas y limitaciones del modelo.
+Este documento resume el estado del Nivel Esencial del proyecto.
 
 ## Resumen de estado
 
-| Requisito | Estado |
-|---|---|
-| Modelo funcional | Pendiente |
-| EDA con visualizaciones | En progreso |
-| Overfitting inferior al 5% | Pendiente |
-| App productivizada | Pendiente |
-| Informe de rendimiento | Pendiente |
+| Requisito | Estado | Evidencia |
+|---|---|---|
+| Modelo funcional | Hecho | `notebooks/02_modeling.ipynb` |
+| EDA con visualizaciones | Hecho | `notebooks/01_EDA.ipynb` |
+| Overfitting inferior al 5% | Hecho | Comparacion train/validacion en `notebooks/02_modeling.ipynb` |
+| Solucion productivizada | Hecho | `app/app.py` |
+| Informe de rendimiento | Hecho | Metricas y explicacion en `notebooks/02_modeling.ipynb` |
 
-## Próximo paso recomendado
+## 1. Modelo de ML funcional
 
-Una vez completado el EDA, el siguiente paso es preparar el notebook de modelado:
+**Estado:** Hecho
 
-```text
-notebooks/02_modeling.ipynb
-```
+El proyecto cuenta con un modelo baseline de regresion para predecir `FloodProbability`.
 
-Este notebook debería incluir:
+Evidencia:
 
-- separación de `X` e `y`,
-- train/validation split,
-- modelo baseline,
-- métricas RMSE, MAE y R2,
-- comparación train vs validation,
-- análisis de overfitting.
+- Notebook: `notebooks/02_modeling.ipynb`
+- Modelo usado por la app: `models/flood_baseline_model.joblib`
+
+## 2. Analisis exploratorio de datos
+
+**Estado:** Hecho
+
+El EDA revisa estructura del dataset, variable objetivo, correlaciones y visualizaciones relevantes para regresion.
+
+Evidencia:
+
+- Notebook: `notebooks/01_EDA.ipynb`
+
+## 3. Control de overfitting
+
+**Estado:** Hecho
+
+El notebook de modelado compara resultados de entrenamiento y validacion para controlar que la diferencia sea aceptable.
+
+Metricas usadas:
+
+- RMSE
+- MAE
+- R2
+
+## 4. Solucion productivizada
+
+**Estado:** Hecho
+
+La aplicacion Streamlit permite usar el modelo fuera del notebook.
+
+Funcionalidades actuales:
+
+- Carga automatica del modelo entrenado.
+- Entrada guiada de variables predictoras.
+- Ayudas por variable para usuarios no tecnicos.
+- Boton para restablecer valores recomendados.
+- Resultado expresado como porcentaje de riesgo estimado de inundacion.
+- Aviso cuando el modelo extrapola fuera del rango esperado.
+- Guardado local de feedback y nuevos registros.
+- Vistas separadas para prediccion, informes tecnicos y datos.
+
+Evidencia:
+
+- Archivo principal: `app/app.py`
+
+## 5. Informe del rendimiento del modelo
+
+**Estado:** Hecho
+
+El rendimiento se documenta en el notebook de modelado con metricas de regresion y explicacion del comportamiento del modelo.
+
+Evidencia:
+
+- Notebook: `notebooks/02_modeling.ipynb`
+
+## Relacion con Nivel Medio
+
+La app ya incluye dos bases utiles para el Nivel Medio:
+
+- Sistema de feedback en `data/feedback/predicciones.csv`.
+- Sistema de recogida de nuevos datos en `data/new_data/nuevos_registros.csv`.
+
+Estos archivos son locales y estan ignorados por Git.
