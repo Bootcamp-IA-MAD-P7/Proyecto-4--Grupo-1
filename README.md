@@ -1,41 +1,53 @@
 # Proyecto 4 - Grupo 1
 
 ![Python](https://img.shields.io/badge/Python-3.11-3776AB?style=for-the-badge&logo=python&logoColor=white)
-![Machine Learning](https://img.shields.io/badge/Machine%20Learning-Regresi%C3%B3n-1A7F37?style=for-the-badge)
+![Machine Learning](https://img.shields.io/badge/Machine%20Learning-Regresion-1A7F37?style=for-the-badge)
 ![Dataset](https://img.shields.io/badge/Dataset-Kaggle-20BEFF?style=for-the-badge&logo=kaggle&logoColor=white)
 ![Modelo](https://img.shields.io/badge/Modelo-Linear%20Regression-8250DF?style=for-the-badge)
-![Estado](https://img.shields.io/badge/Nivel%20Esencial-Casi%20completo-9A6700?style=for-the-badge)
+![Estado](https://img.shields.io/badge/Nivel%20Esencial-Hecho-1A7F37?style=for-the-badge)
 
-Proyecto grupal de Machine Learning orientado a resolver un problema de regresión usando el dataset **Regression with a Flood Prediction Dataset** de Kaggle.
+Proyecto grupal de Machine Learning orientado a resolver un problema de regresion con el dataset **Regression with a Flood Prediction Dataset** de Kaggle.
 
-## Vista rápida
+## Vista rapida
 
-| Área | Estado |
+| Area | Estado |
 |---|---|
-| Problema | Predicción de probabilidad de inundación |
-| Tipo de modelo | Regresión |
+| Problema | Prediccion de probabilidad de inundacion |
+| Tipo de modelo | Regresion |
 | Variable objetivo | `FloodProbability` |
 | Dataset | Regression with a Flood Prediction Dataset |
 | Fuente | Kaggle |
-| Nivel Esencial | ![Casi completo](https://img.shields.io/badge/Casi%20completo-9A6700?style=flat-square) |
-| Pendiente principal | App productivizada con Streamlit |
+| Nivel Esencial | Hecho |
+| App | Streamlit productivizado |
 
 ## Objetivo
 
-Construir un modelo capaz de predecir la variable numérica `FloodProbability`, que representa la probabilidad estimada de inundación a partir de diferentes factores de riesgo.
+Construir un modelo capaz de predecir `FloodProbability`, una variable numerica que representa la probabilidad estimada de inundacion a partir de distintos factores de riesgo.
+
+## Estado actual
+
+El proyecto ya cuenta con:
+
+- EDA documentado en `notebooks/01_EDA.ipynb`.
+- Notebook de modelado en `notebooks/02_modeling.ipynb`.
+- Modelo baseline entrenado y reutilizable desde Streamlit.
+- Aplicacion Streamlit productivizada para realizar predicciones.
+- Sistema local de feedback de predicciones.
+- Sistema local de recogida de nuevos registros para futuros reentrenamientos.
+- Vista separada para prediccion, informes tecnicos y exploracion de datos.
 
 ## Dataset
 
 | Elemento | Valor |
 |---|---|
 | Fuente | Kaggle |
-| Competición | Regression with a Flood Prediction Dataset |
+| Competicion | Regression with a Flood Prediction Dataset |
 | URL | https://www.kaggle.com/competitions/playground-series-s4e5 |
 | Archivo principal | `train.csv` |
 | Variable objetivo | `FloodProbability` |
-| Tipo de problema | Regresión |
+| Tipo de problema | Regresion |
 
-Los archivos del dataset deben descargarse desde Kaggle y colocarse localmente en:
+Los CSV deben descargarse desde Kaggle y colocarse localmente en:
 
 ```text
 data/raw/
@@ -51,43 +63,25 @@ data/
     `-- sample_submission.csv
 ```
 
-Los CSV no se suben al repositorio para evitar incluir archivos pesados. Kaggle se mantiene como fuente oficial de los datos.
+Los datos no se suben al repositorio. `.gitignore` excluye los CSV de `data/raw/`.
 
-## Estructura del proyecto
+## Modelo
+
+La aplicacion espera el modelo entrenado en:
 
 ```text
-Proyecto-4--Grupo-1/
-|-- app/
-|-- data/
-|   |-- raw/
-|   `-- processed/
-|-- docs/
-|   |-- dailies/
-|   |-- project_management/
-|   `-- templates/
-|-- models/
-|-- notebooks/
-|-- reports/
-|   `-- figures/
-|-- src/
-|-- .gitignore
-|-- README.md
-`-- requirements.txt
+models/flood_baseline_model.joblib
 ```
 
-## Tecnologías
+Si no lo encuentra ahi, Streamlit tambien lo busca en:
 
-| Área | Herramientas |
-|---|---|
-| Análisis de datos | Pandas, NumPy |
-| Visualización | Matplotlib, Seaborn |
-| Machine Learning | Scikit-learn |
-| Optimización | Optuna |
-| Productivización | Streamlit |
-| Persistencia de modelo | Joblib |
-| Entorno de trabajo | Jupyter Notebook, Google Colab, VS Code |
+```text
+data/raw/models/flood_baseline_model.joblib
+```
 
-## Instalación
+Si lo encuentra en esa ruta secundaria, lo copia automaticamente a `models/`.
+
+## Instalacion
 
 Crear un entorno virtual:
 
@@ -107,30 +101,36 @@ Instalar dependencias:
 pip install -r requirements.txt
 ```
 
+## Ejecutar la aplicacion
+
+Desde la raiz del proyecto:
+
+```bash
+streamlit run app/app.py
+```
+
+La app incluye tres vistas:
+
+- `Prediccion`: calcula el riesgo estimado de inundacion.
+- `Informes tecnicos`: muestra y contextualiza los notebooks del proyecto.
+- `Datos`: permite revisar una muestra del dataset y, si esta instalado, usar PyGWalker.
+
 ## Notebooks
 
 | Notebook | Contenido | Estado |
 |---|---|---|
-| `notebooks/01_EDA.ipynb` | Carga, revisión inicial, visualizaciones y conclusiones del EDA | ![Hecho](https://img.shields.io/badge/Hecho-1A7F37?style=flat-square) |
-| `notebooks/02_modeling.ipynb` | Modelado baseline, métricas, overfitting, residuos e interpretación | ![Hecho](https://img.shields.io/badge/Hecho-1A7F37?style=flat-square) |
-
-### `01_EDA.ipynb`
-
-Incluye carga del dataset, revisión inicial, análisis de nulos y duplicados, distribución de la variable objetivo, visualizaciones relevantes para regresión, correlaciones y conclusiones del EDA.
-
-### `02_modeling.ipynb`
-
-Incluye separación de variables predictoras y objetivo, train/test split, entrenamiento de modelos baseline, métricas RMSE, MAE y R2, control de overfitting, gráficos de predicción vs valor real, análisis de residuos, interpretación mediante coeficientes y guardado del modelo baseline.
+| `notebooks/01_EDA.ipynb` | Carga, revision inicial, visualizaciones y conclusiones del EDA | Hecho |
+| `notebooks/02_modeling.ipynb` | Modelado baseline, metricas, overfitting, residuos e interpretacion | Hecho |
 
 ## Estado del Nivel Esencial
 
 | Requisito | Estado | Evidencia |
 |---|---|---|
-| Modelo funcional de regresión | ![Hecho](https://img.shields.io/badge/Hecho-1A7F37?style=flat-square) | `notebooks/02_modeling.ipynb` |
-| EDA con visualizaciones | ![Hecho](https://img.shields.io/badge/Hecho-1A7F37?style=flat-square) | `notebooks/01_EDA.ipynb` |
-| Overfitting inferior al 5% | ![Hecho](https://img.shields.io/badge/Hecho-1A7F37?style=flat-square) | 0.077% |
-| Informe de rendimiento | ![Hecho](https://img.shields.io/badge/Hecho-1A7F37?style=flat-square) | Métricas, residuos, predicción vs real |
-| App productivizada | ![Pendiente](https://img.shields.io/badge/Pendiente-9A6700?style=flat-square) | `app/app.py` |
+| Modelo funcional de regresion | Hecho | `notebooks/02_modeling.ipynb` |
+| EDA con visualizaciones | Hecho | `notebooks/01_EDA.ipynb` |
+| Overfitting inferior al 5% | Hecho | 0.077% |
+| Informe de rendimiento | Hecho | Metricas, residuos, prediccion vs real |
+| App productivizada | Hecho | `app/app.py` |
 
 ## Resultado baseline
 
@@ -140,27 +140,62 @@ El mejor modelo baseline identificado hasta el momento es `Linear Regression`.
 |---|---:|---:|---:|---:|
 | Linear Regression | 0.0201 | 0.0158 | 0.8449 | 0.077% |
 
-## Próximo paso
+## Feedback y nuevos datos
 
-El requisito pendiente del Nivel Esencial es la **productivización del modelo**.
-
-La siguiente tarea será crear:
+Cuando se realiza una prediccion, la app guarda informacion local en:
 
 ```text
-app/app.py
+data/feedback/predicciones.csv
+data/new_data/nuevos_registros.csv
 ```
 
-con Streamlit, para cargar el modelo entrenado y permitir obtener predicciones de `FloodProbability` desde una interfaz sencilla.
+Estos CSV son generados por la app y no se suben al repositorio.
 
-## Documentación del proyecto
+## Estructura del proyecto
+
+```text
+Proyecto-4--Grupo-1/
+|-- app/
+|-- data/
+|   |-- feedback/
+|   |-- new_data/
+|   |-- processed/
+|   `-- raw/
+|-- docs/
+|   |-- dailies/
+|   `-- project_management/
+|-- models/
+|-- notebooks/
+|-- reports/
+|   `-- figures/
+|-- src/
+|-- .gitignore
+|-- README.md
+`-- requirements.txt
+```
+
+## Documentacion del proyecto
 
 | Documento | Contenido |
 |---|---|
-| `docs/dataset.md` | Información del dataset y archivos necesarios |
+| `docs/dataset.md` | Informacion del dataset, rutas y archivos generados |
 | `docs/project_management/github_workflow.md` | Flujo de trabajo con ramas, commits y Pull Requests |
 | `docs/project_management/essential_level_checklist.md` | Seguimiento del Nivel Esencial |
-| `docs/project_management/streamlit_plan.md` | Plan para construir la app de Streamlit |
+| `docs/project_management/streamlit_app.md` | Funcionamiento actual de la app Streamlit |
+| `docs/project_management/streamlit_plan.md` | Plan original de la app Streamlit |
 | `docs/dailies/` | Registro de reuniones diarias |
+
+## Tecnologias
+
+| Area | Herramientas |
+|---|---|
+| Analisis de datos | Pandas, NumPy |
+| Visualizacion | Matplotlib, Seaborn |
+| Machine Learning | Scikit-learn |
+| Productivizacion | Streamlit |
+| Persistencia de modelo | Joblib |
+| Exploracion opcional | PyGWalker |
+| Entorno de trabajo | Jupyter Notebook, Google Colab, VS Code |
 
 ## Flujo de trabajo
 
@@ -170,4 +205,4 @@ con Streamlit, para cargar el modelo entrenado y permitir obtener predicciones d
 | `dev` | Rama principal de desarrollo |
 | ramas de tarea | Cambios concretos mediante Pull Request |
 
-Los cambios se integran mediante Pull Requests hacia `dev`. La rama `main` queda reservada para una versión estable del proyecto.
+Los cambios se integran mediante Pull Requests hacia `dev`. La rama `main` queda reservada para una version estable del proyecto.
