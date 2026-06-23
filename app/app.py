@@ -312,6 +312,7 @@ def actualizar_valor_real_feedback(path, prediction_id, valor_real, new_data_pat
 
     feedback_df.loc[mask, "actual_value"] = valor_real
     feedback_df.loc[mask, "error"] = abs(float(valor_real) - float(prediction))
+    feedback_df.loc[mask, "record_status"] = "validated_for_retraining"
     path.parent.mkdir(parents=True, exist_ok=True)
     feedback_df.to_csv(path, index=False)
     if new_data_path is not None:
