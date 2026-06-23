@@ -66,7 +66,7 @@ FEATURE_INFO = {
     "Deforestation": ("Deforestación", "Nivel de pérdida de cobertura vegetal."),
     "Urbanization": ("Urbanización", "Grado de urbanización del área."),
     "ClimateChange": ("Cambio climático", "Impacto estimado de eventos extremos de lluvia o inundación."),
-    "DamsQuality": ("Calidad de presas", "Estado de presas e infraestructuras de contencion."),
+    "DamsQuality": ("Calidad de presas", "Estado de presas e infraestructuras de contención."),
     "Siltation": ("Sedimentación", "Acumulación de sedimentos en cauces o sistemas de agua."),
     "AgriculturalPractices": ("Prácticas agrícolas", "Impacto de prácticas agrícolas sobre el terreno."),
     "Encroachments": ("Ocupación de zonas de riesgo", "Construcciones o usos en zonas inundables."),
@@ -74,7 +74,7 @@ FEATURE_INFO = {
     "DrainageSystems": ("Sistemas de drenaje", "Estado de alcantarillado y drenaje urbano."),
     "CoastalVulnerability": ("Vulnerabilidad costera", "Exposición a marejadas o subida del nivel del mar."),
     "Landslides": ("Deslizamientos de tierra", "Riesgo de deslizamientos que agraven inundaciones."),
-    "Watersheds": ("Cuencas hidrograficas", "Condicion de las cuencas que recogen el agua de lluvia."),
+    "Watersheds": ("Cuencas hidrográficas", "Condición de las cuencas que recogen el agua de lluvia."),
     "DeterioratingInfrastructure": ("Infraestructura deteriorada", "Deterioro de carreteras, drenajes, puentes u obras hidráulicas."),
     "PopulationScore": ("Exposición de población", "Nivel de población expuesta en la zona analizada."),
     "WetlandLoss": ("Pérdida de humedales", "Pérdida de zonas naturales que absorben agua."),
@@ -87,7 +87,7 @@ FEATURE_GUIDANCE = {
     "TopographyDrainage": "Bajo: buen drenaje natural. Medio: drenaje aceptable. Alto: zonas bajas o con acumulación de agua.",
     "RiverManagement": "Bajo: ríos mantenidos. Medio: mantenimiento irregular. Alto: cauces mal gestionados.",
     "Deforestation": "Bajo: buena cobertura vegetal. Medio: pérdida parcial. Alto: deforestación notable.",
-    "Urbanization": "Bajo: zona rural. Medio: area semiurbana. Alto: ciudad densa con suelo impermeable.",
+    "Urbanization": "Bajo: zona rural. Medio: área semiurbana. Alto: ciudad densa con suelo impermeable.",
     "ClimateChange": "Bajo: pocos eventos extremos. Medio: cambios moderados. Alto: aumento claro de eventos extremos.",
     "DamsQuality": "Bajo: contenciones en buen estado. Medio: mantenimiento mejorable. Alto: infraestructura insuficiente.",
     "Siltation": "Bajo: pocos sedimentos. Medio: acumulación moderada. Alto: sedimentos que reducen el paso del agua.",
@@ -297,18 +297,18 @@ def actualizar_valor_real_feedback(path, prediction_id, valor_real, new_data_pat
         feedback_df = pd.read_csv(path)
     except (pd.errors.ParserError, pd.errors.EmptyDataError):
         backup_path = crear_backup_csv(path)
-        return False, f"El archivo de feedback tenia formato incorrecto. Se guardo backup: {backup_path.name}."
+        return False, f"El archivo de feedback tenía formato incorrecto. Se guardó backup: {backup_path.name}."
 
     feedback_df = normalizar_feedback_df(feedback_df)
     feedback_df["prediction"] = pd.to_numeric(feedback_df.get("prediction"), errors="coerce")
     mask = feedback_df["prediction_id"].astype(str) == str(prediction_id)
 
     if not mask.any():
-        return False, "No se encontro la prediccion seleccionada."
+        return False, "No se encontró la predicción seleccionada."
 
     prediction = feedback_df.loc[mask, "prediction"].iloc[0]
     if pd.isna(prediction):
-        return False, "La prediccion seleccionada no tiene un valor numerico valido."
+        return False, "La predicción seleccionada no tiene un valor numérico válido."
 
     feedback_df.loc[mask, "actual_value"] = valor_real
     feedback_df.loc[mask, "error"] = abs(float(valor_real) - float(prediction))
@@ -318,7 +318,7 @@ def actualizar_valor_real_feedback(path, prediction_id, valor_real, new_data_pat
     if new_data_path is not None:
         actualizar_valor_real_nuevos_datos(new_data_path, prediction_id, valor_real)
     cargar_feedback.clear()
-    return True, "Valor real guardado. Las metricas se han actualizado."
+    return True, "Valor real guardado. Las métricas se han actualizado."
 
 
 def eliminar_prediccion_registrada(feedback_path, new_data_path, prediction_id):
@@ -329,12 +329,12 @@ def eliminar_prediccion_registrada(feedback_path, new_data_path, prediction_id):
         feedback_df = pd.read_csv(feedback_path)
     except (pd.errors.ParserError, pd.errors.EmptyDataError):
         backup_path = crear_backup_csv(feedback_path)
-        return False, f"El archivo de feedback tenia formato incorrecto. Se guardo backup: {backup_path.name}."
+        return False, f"El archivo de feedback tenía formato incorrecto. Se guardó backup: {backup_path.name}."
 
     feedback_df = normalizar_feedback_df(feedback_df)
     mask_feedback = feedback_df["prediction_id"].astype(str) == str(prediction_id)
     if not mask_feedback.any():
-        return False, "No se encontro la prediccion seleccionada en feedback."
+        return False, "No se encontró la predicción seleccionada en feedback."
 
     backup_feedback = crear_copia_seguridad_csv(feedback_path, "antes_eliminar")
     feedback_df = feedback_df.loc[~mask_feedback].copy()
@@ -357,7 +357,7 @@ def eliminar_prediccion_registrada(feedback_path, new_data_path, prediction_id):
     cargar_feedback.clear()
     backups = [backup.name for backup in [backup_feedback, backup_new_data] if backup is not None]
     detalle_backup = f" Copia de seguridad: {', '.join(backups)}." if backups else ""
-    return True, f"Prediccion eliminada del historico local.{detalle_backup}"
+    return True, f"Predicción eliminada del histórico local.{detalle_backup}"
 
 
 def restablecer_valores(rangos_variables):
@@ -845,8 +845,8 @@ def mostrar_monitorizacion():
 
     st.subheader("Gestionar registros de feedback")
     st.warning(
-        "Esta zona modifica el historico local de feedback. Editar un valor real cambia las metricas. "
-        "Eliminar una prediccion la quita del feedback y, si existe, tambien del archivo de nuevos datos "
+        "Esta zona modifica el histórico local de feedback. Editar un valor real cambia las métricas. "
+        "Eliminar una predicción la quita del feedback y, si existe, también del archivo de nuevos datos "
         "para reentrenamiento."
     )
 
@@ -859,10 +859,10 @@ def mostrar_monitorizacion():
         prediccion_pct = float(fila.get("prediction", 0)) * 100 if pd.notna(fila.get("prediction")) else 0
         valor_real = fila.get("actual_value")
         valor_real_txt = "sin valor real" if pd.isna(valor_real) else f"real {float(valor_real) * 100:.2f}%"
-        return f"{fecha} | prediccion {prediccion_pct:.2f}% | {valor_real_txt} | {prediction_id}"
+        return f"{fecha} | predicción {prediccion_pct:.2f}% | {valor_real_txt} | {prediction_id}"
 
     registro_id = st.selectbox(
-        "Selecciona una prediccion guardada",
+        "Selecciona una predicción guardada",
         options=opciones_gestion,
         format_func=formatear_prediccion_gestion,
         key="gestion_prediction_id",
@@ -876,7 +876,7 @@ def mostrar_monitorizacion():
     with col_detalle:
         st.caption("Detalle del registro seleccionado")
         st.write(f"Fecha: {registro.get('timestamp', 'sin fecha')}")
-        st.write(f"Prediccion del modelo: {prediccion_registro_pct:.2f}%")
+        st.write(f"Predicción del modelo: {prediccion_registro_pct:.2f}%")
         if pd.isna(valor_real_actual):
             st.write("Valor real actual: pendiente")
         else:
@@ -910,18 +910,18 @@ def mostrar_monitorizacion():
 
     with st.expander("Eliminar registro seleccionado"):
         st.error(
-            "Eliminar este registro borra la prediccion del historico local de feedback. "
-            "Tambien se intentara eliminar su fila asociada en nuevos_registros.csv. "
-            "Esto puede cambiar metricas, graficas y el conjunto disponible para reentrenamiento."
+            "Eliminar este registro borra la predicción del histórico local de feedback. "
+            "También se intentará eliminar su fila asociada en nuevos_registros.csv. "
+            "Esto puede cambiar métricas, gráficas y el conjunto disponible para reentrenamiento."
         )
         st.caption("Para confirmar, escribe exactamente ELIMINAR.")
         confirmacion_eliminar = st.text_input(
-            "Confirmacion de borrado",
+            "Confirmación de borrado",
             key=f"confirmar_eliminar_{registro_id}",
         )
         if st.button("Eliminar definitivamente este registro", type="primary"):
             if confirmacion_eliminar != "ELIMINAR":
-                st.error("No se elimino nada. Debes escribir ELIMINAR para confirmar.")
+                st.error("No se eliminó nada. Debes escribir ELIMINAR para confirmar.")
             else:
                 ok, mensaje = eliminar_prediccion_registrada(FEEDBACK_PATH, NEW_DATA_PATH, registro_id)
                 if ok:
@@ -987,7 +987,7 @@ def mostrar_monitorizacion():
     )
     st.dataframe(feedback_display.fillna(""), use_container_width=True, hide_index=True)
 
-    with st.expander("Ubicacion del archivo de feedback"):
+    with st.expander("Ubicación del archivo de feedback"):
         st.code(str(FEEDBACK_PATH), language="text")
 
 
