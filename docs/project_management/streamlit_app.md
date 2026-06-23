@@ -20,7 +20,7 @@ streamlit run app/app.py
 
 ## Vistas de la aplicacion
 
-La app se organiza en tres vistas desde la barra lateral.
+La app se organiza en varias vistas desde la barra lateral.
 
 ### Prediccion
 
@@ -36,6 +36,33 @@ Incluye:
 - Resultado en porcentaje.
 - Categoria de riesgo: bajo, medio o alto.
 - Guardado de feedback y nuevos datos.
+
+### Monitorizacion
+
+Permite revisar el rendimiento del modelo a partir del feedback guardado:
+
+- Total de predicciones guardadas.
+- Predicciones con valor real.
+- Predicciones pendientes de valor real.
+- Metricas acumuladas cuando hay valores reales: MAE, RMSE y R2 cuando aplica.
+- Edicion de valores reales ya guardados.
+- Eliminacion de registros con confirmacion explicita.
+
+### Pipeline de reentrenamiento
+
+Prepara los registros nuevos recogidos por la aplicacion para futuros reentrenamientos.
+
+Funcionamiento:
+
+- Cada prediccion se guarda en `data/new_data/nuevos_registros.csv`.
+- Si la prediccion no tiene valor real, queda como `pending_target`.
+- Si se introduce o se completa el valor real, queda como `validated_for_retraining`.
+- Solo los registros con valor real pueden usarse como datos supervisados.
+- La vista permite generar `data/processed/retraining_dataset.csv`.
+
+El dataset generado contiene las variables predictoras y usa el valor real observado como `FloodProbability`.
+
+La prediccion del modelo se conserva como referencia, pero no se usa como variable objetivo para reentrenar.
 
 ### Informes tecnicos
 
@@ -83,13 +110,16 @@ Cada prediccion genera datos locales:
 ```text
 data/feedback/predicciones.csv
 data/new_data/nuevos_registros.csv
+data/processed/retraining_dataset.csv
 ```
 
 `predicciones.csv` sirve para monitorizar predicciones y errores cuando se introduce un valor real.
 
 `nuevos_registros.csv` sirve como base para futuros reentrenamientos.
 
-Ambos archivos estan ignorados por Git.
+`retraining_dataset.csv` se genera desde la vista Pipeline de reentrenamiento cuando existen registros con valor real.
+
+Estos archivos estan ignorados por Git.
 
 ## Limitaciones
 

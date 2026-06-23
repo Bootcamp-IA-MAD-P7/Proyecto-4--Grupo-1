@@ -34,6 +34,7 @@ MODEL_CANDIDATES = [
 
 FEEDBACK_PATH = PROJECT_ROOT / "data" / "feedback" / "predicciones.csv"
 NEW_DATA_PATH = PROJECT_ROOT / "data" / "new_data" / "nuevos_registros.csv"
+RETRAINING_DATASET_PATH = PROJECT_ROOT / "data" / "processed" / "retraining_dataset.csv"
 
 FEATURE_COLUMNS = [
     "MonsoonIntensity",
@@ -243,7 +244,52 @@ def normalizar_feedback_df(feedback_df):
     return feedback_df
 
 
-def actualizar_valor_real_feedback(path, prediction_id, valor_real):
+def normalizar_nuevos_datos_df(new_data_df):
+    new_data_df = new_data_df.copy()
+    if "prediction_id" not in new_data_df.columns:
+        new_data_df.insert(0, "prediction_id", "")
+    if "actual_value" not in new_data_df.columns:
+        new_data_df["actual_value"] = ""
+    if "record_status" not in new_data_df.columns:
+        new_data_df["record_status"] = ""
+
+    ids_vacios = new_data_df["prediction_id"].isna() | (new_data_df["prediction_id"].astype(str).str.strip() == "")
+    if ids_vacios.any():
+        for idx in new_data_df[ids_vacios].index:
+            timestamp = str(new_data_df.at[idx, "timestamp"]) if "timestamp" in new_data_df.columns else "sin_fecha"
+            timestamp = timestamp.replace(":", "").replace("-", "").replace(" ", "_")
+            new_data_df.at[idx, "prediction_id"] = f"new_legacy_{idx}_{timestamp}"
+
+    new_data_df["actual_value"] = pd.to_numeric(new_data_df["actual_value"], errors="coerce")
+    new_data_df["record_status"] = np.where(
+        new_data_df["actual_value"].notna(),
+        "validated_for_retraining",
+        "pending_target",
+    )
+    return new_data_df
+
+
+def actualizar_valor_real_nuevos_datos(path, prediction_id, valor_real):
+    if not path.exists():
+        return
+
+    try:
+        new_data_df = pd.read_csv(path)
+    except (pd.errors.ParserError, pd.errors.EmptyDataError):
+        crear_backup_csv(path)
+        return
+
+    new_data_df = normalizar_nuevos_datos_df(new_data_df)
+    mask = new_data_df["prediction_id"].astype(str) == str(prediction_id)
+    if not mask.any():
+        return
+
+    new_data_df.loc[mask, "actual_value"] = valor_real
+    new_data_df.loc[mask, "record_status"] = "validated_for_retraining"
+    new_data_df.to_csv(path, index=False)
+
+
+def actualizar_valor_real_feedback(path, prediction_id, valor_real, new_data_path=None):
     if not path.exists():
         return False, "No existe el archivo de feedback."
 
@@ -268,6 +314,8 @@ def actualizar_valor_real_feedback(path, prediction_id, valor_real):
     feedback_df.loc[mask, "error"] = abs(float(valor_real) - float(prediction))
     path.parent.mkdir(parents=True, exist_ok=True)
     feedback_df.to_csv(path, index=False)
+    if new_data_path is not None:
+        actualizar_valor_real_nuevos_datos(new_data_path, prediction_id, valor_real)
     cargar_feedback.clear()
     return True, "Valor real guardado. Las metricas se han actualizado."
 
@@ -418,13 +466,19 @@ def mostrar_guia_uso():
     mostrar_tarjeta(
         "4. Datos para reentrenamiento",
         "Cada predicción guarda los valores introducidos. Esto permite construir un histórico "
-        "para futuros reentrenamientos del modelo.",
+        "para futuros reentrenamientos del modelo cuando se complete el valor real observado.",
         color="#F5F3FF",
         borde="#7C3AED",
     )
 
-    tab_pred, tab_real, tab_monitor, tab_archivos = st.tabs(
-        ["Cómo predecir", "Cuándo guardar valor real", "Cómo leer monitorización", "Qué se guarda"]
+    tab_pred, tab_real, tab_monitor, tab_pipeline, tab_archivos = st.tabs(
+        [
+            "Cómo predecir",
+            "Cuándo guardar valor real",
+            "Cómo leer monitorización",
+            "Pipeline",
+            "Qué se guarda",
+        ]
     )
 
     with tab_pred:
@@ -474,6 +528,19 @@ def mostrar_guia_uso():
             """
         )
 
+    with tab_pipeline:
+        st.subheader("Cómo funciona el pipeline de reentrenamiento")
+        st.markdown(
+            """
+            La vista **Pipeline de reentrenamiento** revisa los registros nuevos generados por la app.
+
+            - Si un registro no tiene valor real, queda como **pendiente**.
+            - Si tiene valor real, queda como **listo para reentrenar**.
+            - El dataset de reentrenamiento usa las variables predictoras y el valor real como `FloodProbability`.
+            - La predicción del modelo se conserva como referencia, pero no se usa como objetivo de entrenamiento.
+            """
+        )
+
     with tab_archivos:
         st.subheader("Qué archivos genera la app")
         st.markdown(
@@ -483,11 +550,14 @@ def mostrar_guia_uso():
             ```text
             data/feedback/predicciones.csv
             data/new_data/nuevos_registros.csv
+            data/processed/retraining_dataset.csv
             ```
 
             `predicciones.csv` sirve para monitorizar errores y rendimiento.
 
             `nuevos_registros.csv` sirve como base para futuros reentrenamientos.
+
+            `retraining_dataset.csv` se genera desde el pipeline cuando existen registros con valor real.
 
             Estos archivos son locales y están ignorados por Git, por lo que no se suben al repositorio.
             """
@@ -629,6 +699,8 @@ def mostrar_prediccion(nombre_usuario):
         "model_file": MODEL_FILENAME,
         **valores,
         "prediction": prediccion,
+        "actual_value": valor_real if valor_real is not None else "",
+        "record_status": "validated_for_retraining" if valor_real is not None else "pending_target",
     }
     fila_feedback = fila_base.copy()
     fila_feedback["actual_value"] = valor_real if valor_real is not None else ""
@@ -762,6 +834,7 @@ def mostrar_monitorizacion():
                 FEEDBACK_PATH,
                 prediction_id_seleccionado,
                 valor_real_pendiente_pct / 100,
+                NEW_DATA_PATH,
             )
             if ok:
                 st.success(mensaje)
@@ -826,6 +899,7 @@ def mostrar_monitorizacion():
                 FEEDBACK_PATH,
                 registro_id,
                 nuevo_valor_real_pct / 100,
+                NEW_DATA_PATH,
             )
             if ok:
                 st.success(mensaje)
@@ -916,6 +990,128 @@ def mostrar_monitorizacion():
         st.code(str(FEEDBACK_PATH), language="text")
 
 
+@st.cache_data(ttl=5)
+def cargar_nuevos_datos(path):
+    if not path.exists():
+        return pd.DataFrame()
+    try:
+        new_data_df = pd.read_csv(path)
+    except (pd.errors.ParserError, pd.errors.EmptyDataError):
+        crear_backup_csv(path)
+        return pd.DataFrame()
+    return normalizar_nuevos_datos_df(new_data_df)
+
+
+def construir_dataset_reentrenamiento(new_data_df):
+    if new_data_df.empty:
+        return pd.DataFrame()
+
+    required_cols = [*FEATURE_COLUMNS, "actual_value"]
+    missing_cols = [col for col in required_cols if col not in new_data_df.columns]
+    if missing_cols:
+        return pd.DataFrame()
+
+    validated_df = new_data_df.dropna(subset=["actual_value"]).copy()
+    if validated_df.empty:
+        return pd.DataFrame()
+
+    retraining_df = validated_df[FEATURE_COLUMNS].copy()
+    retraining_df["FloodProbability"] = validated_df["actual_value"].astype(float)
+    return retraining_df
+
+
+def guardar_dataset_reentrenamiento(retraining_df, path):
+    if retraining_df.empty:
+        return False
+    path.parent.mkdir(parents=True, exist_ok=True)
+    retraining_df.to_csv(path, index=False)
+    return True
+
+
+def mostrar_pipeline_reentrenamiento():
+    st.header("Pipeline de ingestión para reentrenamiento")
+    st.write(
+        "Esta vista prepara los datos nuevos recogidos por la aplicación para futuros reentrenamientos. "
+        "Solo los registros con valor real observado pueden usarse como datos supervisados."
+    )
+    st.info(
+        "La predicción del modelo sirve como referencia, pero no debe usarse como variable objetivo para reentrenar. "
+        "Para reentrenamiento se usa el valor real observado como `FloodProbability`."
+    )
+
+    new_data_df = cargar_nuevos_datos(NEW_DATA_PATH)
+    if new_data_df.empty:
+        st.warning(
+            "Todavía no hay registros nuevos. Genera predicciones desde la vista Predicción para alimentar el pipeline."
+        )
+        return
+
+    total_registros = len(new_data_df)
+    registros_validados = new_data_df.dropna(subset=["actual_value"]).copy()
+    registros_pendientes = total_registros - len(registros_validados)
+
+    col_total, col_validos, col_pendientes = st.columns(3)
+    col_total.metric("Registros nuevos", total_registros)
+    col_validos.metric("Listos para reentrenar", len(registros_validados))
+    col_pendientes.metric("Pendientes de valor real", registros_pendientes)
+
+    st.subheader("Estado del pipeline")
+    if registros_validados.empty:
+        st.warning(
+            "Hay registros nuevos, pero ninguno tiene valor real. Completa valores reales en Monitorización "
+            "para poder generar un dataset supervisado."
+        )
+    else:
+        retraining_df = construir_dataset_reentrenamiento(new_data_df)
+        st.success(
+            f"Hay {len(retraining_df)} registros validados que pueden incorporarse a futuros reentrenamientos."
+        )
+
+        preview_df = retraining_df.tail(20).copy()
+        st.dataframe(preview_df, use_container_width=True, hide_index=True)
+
+        col_guardar, col_descargar = st.columns([1, 1])
+        with col_guardar:
+            if st.button("Generar dataset de reentrenamiento"):
+                if guardar_dataset_reentrenamiento(retraining_df, RETRAINING_DATASET_PATH):
+                    st.success(f"Dataset generado en: {RETRAINING_DATASET_PATH}")
+                else:
+                    st.error("No se pudo generar el dataset de reentrenamiento.")
+
+        with col_descargar:
+            csv_bytes = retraining_df.to_csv(index=False).encode("utf-8")
+            st.download_button(
+                "Descargar dataset validado",
+                data=csv_bytes,
+                file_name="retraining_dataset.csv",
+                mime="text/csv",
+            )
+
+    st.subheader("Registros recientes recogidos por la app")
+    display_cols = [
+        col
+        for col in [
+            "timestamp",
+            "consultor",
+            "model_name",
+            "model_version",
+            "prediction",
+            "actual_value",
+            "record_status",
+        ]
+        if col in new_data_df.columns
+    ]
+    display_df = new_data_df[display_cols].tail(20).copy()
+    for col in ["prediction", "actual_value"]:
+        if col in display_df.columns:
+            display_df[col] = pd.to_numeric(display_df[col], errors="coerce") * 100
+    st.dataframe(display_df.fillna(""), use_container_width=True, hide_index=True)
+
+    with st.expander("Archivos del pipeline"):
+        st.code(str(NEW_DATA_PATH), language="text")
+        st.code(str(RETRAINING_DATASET_PATH), language="text")
+
+
 def mostrar_datos(num_rows):
     st.header("Datos y exploración")
     st.write(
@@ -951,7 +1147,7 @@ st.sidebar.header("Panel de control")
 nombre_usuario = st.sidebar.text_input("Consultor a cargo:", value="Estudiante")
 vista = st.sidebar.radio(
     "Vista",
-    ["Guía de uso", "Predicción", "Monitorización", "Informes técnicos", "Datos"],
+    ["Guía de uso", "Predicción", "Monitorización", "Pipeline de reentrenamiento", "Informes técnicos", "Datos"],
 )
 
 num_rows = st.sidebar.slider(
@@ -977,6 +1173,8 @@ elif vista == "Predicción":
     mostrar_prediccion(nombre_usuario)
 elif vista == "Monitorización":
     mostrar_monitorizacion()
+elif vista == "Pipeline de reentrenamiento":
+    mostrar_pipeline_reentrenamiento()
 elif vista == "Informes técnicos":
     mostrar_informes()
 else:
