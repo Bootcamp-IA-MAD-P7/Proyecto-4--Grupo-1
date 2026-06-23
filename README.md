@@ -4,7 +4,7 @@
 ![Machine Learning](https://img.shields.io/badge/Machine%20Learning-Regresion-1A7F37?style=for-the-badge)
 ![Dataset](https://img.shields.io/badge/Dataset-Kaggle-20BEFF?style=for-the-badge&logo=kaggle&logoColor=white)
 ![Modelo](https://img.shields.io/badge/Modelo-Linear%20Regression-8250DF?style=for-the-badge)
-![Estado](https://img.shields.io/badge/Nivel%20Esencial-Hecho-1A7F37?style=for-the-badge)
+![Estado](https://img.shields.io/badge/Nivel%20Medio-Hecho-1A7F37?style=for-the-badge)
 
 Proyecto grupal de Machine Learning orientado a resolver un problema de regresion con el dataset **Regression with a Flood Prediction Dataset** de Kaggle.
 
@@ -18,7 +18,8 @@ Proyecto grupal de Machine Learning orientado a resolver un problema de regresio
 | Dataset | Regression with a Flood Prediction Dataset |
 | Fuente | Kaggle |
 | Nivel Esencial | Hecho |
-| App | Streamlit productivizado |
+| Nivel Medio | Hecho |
+| App | Streamlit productivizado con feedback, monitorizacion y pipeline |
 
 ## Objetivo
 
@@ -30,11 +31,17 @@ El proyecto ya cuenta con:
 
 - EDA documentado en `notebooks/01_EDA.ipynb`.
 - Notebook de modelado en `notebooks/02_modeling.ipynb`.
+- Notebook de ensemble en `notebooks/03_ensemble-techniques.ipynb`.
+- Notebook de optimizacion de hiperparametros en `notebooks/04_hyperparameter_optimization.ipynb`.
+- Notebook de validacion cruzada en `notebooks/05_cross_validation.ipynb`.
+- Notebook de pipeline de reentrenamiento en `notebooks/06_retraining_pipeline.ipynb`.
 - Modelo baseline entrenado y reutilizable desde Streamlit.
 - Aplicacion Streamlit productivizada para realizar predicciones.
-- Sistema local de feedback de predicciones.
+- Sistema local de feedback de predicciones con edicion y eliminacion controlada.
+- Monitorizacion de performance con metricas cuando existen valores reales.
 - Sistema local de recogida de nuevos registros para futuros reentrenamientos.
-- Vista separada para prediccion, informes tecnicos y exploracion de datos.
+- Pipeline de ingestion para generar un dataset validado de reentrenamiento.
+- Vista separada para guia de uso, prediccion, monitorizacion, pipeline, informes tecnicos y exploracion de datos.
 
 ## Dataset
 
@@ -109,9 +116,12 @@ Desde la raiz del proyecto:
 streamlit run app/app.py
 ```
 
-La app incluye tres vistas:
+La app incluye estas vistas:
 
+- `Guia de uso`: explica el flujo de trabajo de la aplicacion.
 - `Prediccion`: calcula el riesgo estimado de inundacion.
+- `Monitorizacion`: revisa feedback, metricas, valores reales y gestion de registros.
+- `Pipeline de reentrenamiento`: prepara registros validados para futuros reentrenamientos.
 - `Informes tecnicos`: muestra y contextualiza los notebooks del proyecto.
 - `Datos`: permite revisar una muestra del dataset y, si esta instalado, usar PyGWalker.
 
@@ -121,6 +131,10 @@ La app incluye tres vistas:
 |---|---|---|
 | `notebooks/01_EDA.ipynb` | Carga, revision inicial, visualizaciones y conclusiones del EDA | Hecho |
 | `notebooks/02_modeling.ipynb` | Modelado baseline, metricas, overfitting, residuos e interpretacion | Hecho |
+| `notebooks/03_ensemble-techniques.ipynb` | Comparacion de modelos ensemble frente al baseline | Hecho |
+| `notebooks/04_hyperparameter_optimization.ipynb` | GridSearchCV, RandomizedSearchCV y Optuna | Hecho |
+| `notebooks/05_cross_validation.ipynb` | Validacion cruzada K-Fold sobre modelos candidatos | Hecho |
+| `notebooks/06_retraining_pipeline.ipynb` | Documentacion y validacion del pipeline de datos nuevos | Hecho |
 
 ## Estado del Nivel Esencial
 
@@ -131,6 +145,16 @@ La app incluye tres vistas:
 | Overfitting inferior al 5% | Hecho | 0.077% |
 | Informe de rendimiento | Hecho | Metricas, residuos, prediccion vs real |
 | App productivizada | Hecho | `app/app.py` |
+
+## Estado del Nivel Medio
+
+| Requisito | Estado | Evidencia |
+|---|---|---|
+| Modelo con tecnicas ensemble | Hecho | `notebooks/03_ensemble-techniques.ipynb` |
+| Validacion cruzada | Hecho | `notebooks/05_cross_validation.ipynb` |
+| Optimizacion de hiperparametros | Hecho | `notebooks/04_hyperparameter_optimization.ipynb` |
+| Feedback para monitorizar performance | Hecho | Vista `Monitorizacion` en `app/app.py` |
+| Recogida de datos nuevos para reentrenamiento | Hecho | Vista `Pipeline de reentrenamiento` en `app/app.py` y `notebooks/06_retraining_pipeline.ipynb` |
 
 ## Resultado baseline
 
@@ -147,9 +171,38 @@ Cuando se realiza una prediccion, la app guarda informacion local en:
 ```text
 data/feedback/predicciones.csv
 data/new_data/nuevos_registros.csv
+data/processed/retraining_dataset.csv
 ```
 
+`predicciones.csv` guarda el feedback de uso y permite calcular metricas cuando existe valor real.
+
+`nuevos_registros.csv` guarda los registros generados por la app, con estado `pending_target` o `validated_for_retraining`.
+
+`retraining_dataset.csv` se genera desde la vista Pipeline de reentrenamiento con los registros que ya tienen valor real.
+
 Estos CSV son generados por la app y no se suben al repositorio.
+
+## Pipeline de reentrenamiento
+
+El pipeline de ingestion de datos nuevos esta integrado en Streamlit porque los registros se generan durante el uso real de la aplicacion.
+
+Flujo implementado:
+
+1. El usuario realiza una prediccion desde la vista `Prediccion`.
+2. La app guarda los valores introducidos, la prediccion y la version del modelo en `data/new_data/nuevos_registros.csv`.
+3. Si todavia no existe valor real observado, el registro queda como `pending_target`.
+4. Cuando se completa el valor real desde `Monitorizacion`, el registro pasa a `validated_for_retraining`.
+5. La vista `Pipeline de reentrenamiento` filtra los registros validados.
+6. Con esos registros genera `data/processed/retraining_dataset.csv`.
+
+El dataset de reentrenamiento usa:
+
+- Las 20 variables predictoras originales.
+- `actual_value` como nueva variable objetivo `FloodProbability`.
+
+La columna `prediction` se conserva como referencia, pero no se usa como target de entrenamiento. Esto evita reentrenar el modelo copiando sus propias predicciones.
+
+El notebook `notebooks/06_retraining_pipeline.ipynb` documenta y reproduce esta logica de forma tecnica para facilitar la revision del requisito de Nivel Medio.
 
 ## Estructura del proyecto
 
@@ -191,7 +244,7 @@ Proyecto-4--Grupo-1/
 |---|---|
 | Analisis de datos | Pandas, NumPy |
 | Visualizacion | Matplotlib, Seaborn |
-| Machine Learning | Scikit-learn |
+| Machine Learning | Scikit-learn, XGBoost, LightGBM, Optuna |
 | Productivizacion | Streamlit |
 | Persistencia de modelo | Joblib |
 | Exploracion opcional | PyGWalker |

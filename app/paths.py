@@ -1,5 +1,4 @@
 from pathlib import Path
-import pandas as pd
 
 BASE = Path(__file__).parent          # .../app
 PROJECT_ROOT = BASE.parent          # .../ (repo root)
@@ -23,7 +22,3 @@ def get_data_path(filename="train.csv"):
     return candidate.resolve()
 
 DATA_PATH = get_data_path("train.csv")
-
-
-
-df = pd.read_csv(DATA_PATH)
