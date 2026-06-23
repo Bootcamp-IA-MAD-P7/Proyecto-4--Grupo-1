@@ -34,6 +34,7 @@ El proyecto ya cuenta con:
 - Notebook de ensemble en `notebooks/03_ensemble-techniques.ipynb`.
 - Notebook de optimizacion de hiperparametros en `notebooks/04_hyperparameter_optimization.ipynb`.
 - Notebook de validacion cruzada en `notebooks/05_cross_validation.ipynb`.
+- Notebook de pipeline de reentrenamiento en `notebooks/06_retraining_pipeline.ipynb`.
 - Modelo baseline entrenado y reutilizable desde Streamlit.
 - Aplicacion Streamlit productivizada para realizar predicciones.
 - Sistema local de feedback de predicciones con edicion y eliminacion controlada.
@@ -133,6 +134,7 @@ La app incluye estas vistas:
 | `notebooks/03_ensemble-techniques.ipynb` | Comparacion de modelos ensemble frente al baseline | Hecho |
 | `notebooks/04_hyperparameter_optimization.ipynb` | GridSearchCV, RandomizedSearchCV y Optuna | Hecho |
 | `notebooks/05_cross_validation.ipynb` | Validacion cruzada K-Fold sobre modelos candidatos | Hecho |
+| `notebooks/06_retraining_pipeline.ipynb` | Documentacion y validacion del pipeline de datos nuevos | Hecho |
 
 ## Estado del Nivel Esencial
 
@@ -152,7 +154,7 @@ La app incluye estas vistas:
 | Validacion cruzada | Hecho | `notebooks/05_cross_validation.ipynb` |
 | Optimizacion de hiperparametros | Hecho | `notebooks/04_hyperparameter_optimization.ipynb` |
 | Feedback para monitorizar performance | Hecho | Vista `Monitorizacion` en `app/app.py` |
-| Recogida de datos nuevos para reentrenamiento | Hecho | Vista `Pipeline de reentrenamiento` en `app/app.py` |
+| Recogida de datos nuevos para reentrenamiento | Hecho | Vista `Pipeline de reentrenamiento` en `app/app.py` y `notebooks/06_retraining_pipeline.ipynb` |
 
 ## Resultado baseline
 
@@ -179,6 +181,28 @@ data/processed/retraining_dataset.csv
 `retraining_dataset.csv` se genera desde la vista Pipeline de reentrenamiento con los registros que ya tienen valor real.
 
 Estos CSV son generados por la app y no se suben al repositorio.
+
+## Pipeline de reentrenamiento
+
+El pipeline de ingestion de datos nuevos esta integrado en Streamlit porque los registros se generan durante el uso real de la aplicacion.
+
+Flujo implementado:
+
+1. El usuario realiza una prediccion desde la vista `Prediccion`.
+2. La app guarda los valores introducidos, la prediccion y la version del modelo en `data/new_data/nuevos_registros.csv`.
+3. Si todavia no existe valor real observado, el registro queda como `pending_target`.
+4. Cuando se completa el valor real desde `Monitorizacion`, el registro pasa a `validated_for_retraining`.
+5. La vista `Pipeline de reentrenamiento` filtra los registros validados.
+6. Con esos registros genera `data/processed/retraining_dataset.csv`.
+
+El dataset de reentrenamiento usa:
+
+- Las 20 variables predictoras originales.
+- `actual_value` como nueva variable objetivo `FloodProbability`.
+
+La columna `prediction` se conserva como referencia, pero no se usa como target de entrenamiento. Esto evita reentrenar el modelo copiando sus propias predicciones.
+
+El notebook `notebooks/06_retraining_pipeline.ipynb` documenta y reproduce esta logica de forma tecnica para facilitar la revision del requisito de Nivel Medio.
 
 ## Estructura del proyecto
 
