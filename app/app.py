@@ -3,24 +3,20 @@ from pathlib import Path
 import base64
 import csv
 import shutil
+import sys
 
 import joblib
 import nbformat
 import numpy as np
 import pandas as pd
-import sys
-from pathlib import Path
-
-sys.path.append(str(Path(__file__).resolve().parent.parent))
-
-
 import streamlit as st
-print(st.secrets.get("connections", {}).get("postgresql", {}))
-
-from src import db_insert
-
-
 from sklearn.metrics import mean_absolute_error, mean_squared_error, r2_score
+
+BASE = Path(__file__).parent
+PROJECT_ROOT = BASE.parent
+for import_path in (BASE, PROJECT_ROOT):
+    if str(import_path) not in sys.path:
+        sys.path.append(str(import_path))
 
 from paths import get_data_path
 
@@ -30,8 +26,9 @@ except ModuleNotFoundError:
     pyg = None
 
 
-BASE = Path(__file__).parent
-PROJECT_ROOT = BASE.parent
+from src import database
+from src.features import add_engineered_features, summarize_engineered_features
+
 DATA_PATH = get_data_path("train.csv")
 
 MODEL_FILENAME = "flood_baseline_model.joblib"
@@ -46,6 +43,9 @@ MODEL_CANDIDATES = [
 FEEDBACK_PATH = PROJECT_ROOT / "data" / "feedback" / "predicciones.csv"
 NEW_DATA_PATH = PROJECT_ROOT / "data" / "new_data" / "nuevos_registros.csv"
 RETRAINING_DATASET_PATH = PROJECT_ROOT / "data" / "processed" / "retraining_dataset.csv"
+DATABASE_PATH = PROJECT_ROOT / "data" / "database" / "flood_app.sqlite"
+STYLE_PATH = BASE / "style.css"
+WEATHER_BACKGROUND_PATH = BASE / "assets" / "weather-dashboard-bg.jpg"
 
 FEATURE_COLUMNS = [
     "MonsoonIntensity",
@@ -137,10 +137,50 @@ def mostrar_tarjeta(titulo, texto, color="#F8FAFC", borde="#CBD5E1"):
             padding: 1rem 1.1rem;
             border-radius: 0.5rem;
             margin: 0.6rem 0 1rem 0;
+            color:#0F172A;
         ">
-            <strong>{titulo}</strong>
-            <p style="margin:0.35rem 0 0 0;">{texto}</p>
+            <strong style="color:#0F172A;">{titulo}</strong>
+            <p style="margin:0.35rem 0 0 0;color:#1E293B;">{texto}</p>
         </div>
+        """,
+        unsafe_allow_html=True,
+    )
+
+
+def aplicar_estilo_visual():
+    css = STYLE_PATH.read_text(encoding="utf-8") if STYLE_PATH.exists() else ""
+    background_css = ""
+    if WEATHER_BACKGROUND_PATH.exists():
+        image_b64 = base64.b64encode(WEATHER_BACKGROUND_PATH.read_bytes()).decode("utf-8")
+        background_css = f":root {{ --weather-bg: url('data:image/png;base64,{image_b64}'); }}"
+
+    st.markdown(f"<style>{background_css}\n{css}</style>", unsafe_allow_html=True)
+
+
+def guardar_registro_base_datos(fila):
+    try:
+        database.save_prediction_record(DATABASE_PATH, fila, FEATURE_COLUMNS)
+        return True, "Registro guardado tambien en la base de datos local."
+    except Exception as exc:
+        return False, f"No se pudo guardar en la base de datos local: {exc}"
+
+
+def mostrar_cabecera(nombre_usuario):
+    st.markdown(
+        f"""
+        <section class="app-hero">
+            <div>
+                <p class="app-hero__eyebrow">Flood Risk Intelligence</p>
+                <h1>Centro de análisis de inundaciones</h1>
+                <p class="app-hero__subtitle">
+                    Predicción, monitorización, base de datos y pipeline de ingesta para apoyar decisiones de riesgo.
+                </p>
+            </div>
+            <div class="app-hero__meta">
+                <span>Grupo 1</span>
+                <strong>{nombre_usuario}</strong>
+            </div>
+        </section>
         """,
         unsafe_allow_html=True,
     )
@@ -328,8 +368,13 @@ def actualizar_valor_real_feedback(path, prediction_id, valor_real, new_data_pat
     feedback_df.to_csv(path, index=False)
     if new_data_path is not None:
         actualizar_valor_real_nuevos_datos(new_data_path, prediction_id, valor_real)
+    db_warning = ""
+    try:
+        database.update_actual_value(DATABASE_PATH, str(prediction_id), float(valor_real), float(prediction))
+    except Exception as exc:
+        db_warning = f" Aviso: no se pudo actualizar la base de datos local ({exc})."
     cargar_feedback.clear()
-    return True, "Valor real guardado. Las métricas se han actualizado."
+    return True, f"Valor real guardado. Las métricas se han actualizado.{db_warning}"
 
 
 def eliminar_prediccion_registrada(feedback_path, new_data_path, prediction_id):
@@ -365,10 +410,16 @@ def eliminar_prediccion_registrada(feedback_path, new_data_path, prediction_id):
                     new_data_df = new_data_df.loc[~mask_new_data].copy()
                     new_data_df.to_csv(new_data_path, index=False)
 
+    db_warning = ""
+    try:
+        database.delete_prediction_record(DATABASE_PATH, str(prediction_id))
+    except Exception as exc:
+        db_warning = f" Aviso: no se pudo actualizar la base de datos local ({exc})."
+
     cargar_feedback.clear()
     backups = [backup.name for backup in [backup_feedback, backup_new_data] if backup is not None]
     detalle_backup = f" Copia de seguridad: {', '.join(backups)}." if backups else ""
-    return True, f"Predicción eliminada del histórico local.{detalle_backup}"
+    return True, f"Predicción eliminada del histórico local.{detalle_backup}{db_warning}"
 
 
 def restablecer_valores(rangos_variables):
@@ -435,12 +486,21 @@ def renderizar_notebook_real(notebook_path):
             elif cell.cell_type == "code":
                 for output in cell.outputs:
                     if output.output_type == "stream":
-                        st.text(reparar_texto(output.text))
+                        st.markdown(
+                            f"<div class='notebook-output'><pre>{reparar_texto(output.text)}</pre></div>",
+                            unsafe_allow_html=True,
+                        )
                     elif output.output_type in ("execute_result", "display_data"):
                         if "text/html" in output.data:
-                            st.markdown(reparar_texto(output.data["text/html"]), unsafe_allow_html=True)
+                            st.markdown(
+                                f"<div class='notebook-output'>{reparar_texto(output.data['text/html'])}</div>",
+                                unsafe_allow_html=True,
+                            )
                         elif "text/plain" in output.data:
-                            st.text(reparar_texto(output.data["text/plain"]))
+                            st.markdown(
+                                f"<div class='notebook-output'><pre>{reparar_texto(output.data['text/plain'])}</pre></div>",
+                                unsafe_allow_html=True,
+                            )
                         if "image/png" in output.data:
                             st.image(base64.b64decode(output.data["image/png"]))
     except Exception as e:
@@ -448,130 +508,285 @@ def renderizar_notebook_real(notebook_path):
 
 
 def mostrar_guia_uso():
-    st.header("Guía de uso de la aplicación")
+    st.header("Guía del proyecto y uso de la aplicación")
     st.write(
-        "Esta guía explica cómo usar el predictor, cuándo guardar el valor real "
-        "y cómo interpretar la monitorización del modelo."
+        "Esta pantalla explica qué hace la solución, cómo usarla y cómo interpretar las partes "
+        "principales de un proyecto de regresión sin necesidad de entrar en detalle técnico."
     )
 
-    mostrar_tarjeta(
-        "1. Predicción",
-        "Usa la vista Predicción para introducir las condiciones de una zona. "
-        "La app devuelve una probabilidad estimada de inundación en porcentaje.",
-        color="#EFF6FF",
-        borde="#2563EB",
-    )
-    mostrar_tarjeta(
-        "2. Valor real observado",
-        "Marca la casilla de valor real solo cuando conozcas el dato real o confirmado. "
-        "Por ejemplo, si después se observa que el valor real fue 55%, introdúcelo para comparar.",
-        color="#F0FDF4",
-        borde="#16A34A",
-    )
-    mostrar_tarjeta(
-        "3. Monitorización",
-        "La vista Monitorización compara predicciones con valores reales. "
-        "Sin valores reales, la app guarda predicciones, pero no puede calcular errores.",
-        color="#FFFBEB",
-        borde="#D97706",
-    )
-    mostrar_tarjeta(
-        "4. Datos para reentrenamiento",
-        "Cada predicción guarda los valores introducidos. Esto permite construir un histórico "
-        "para futuros reentrenamientos del modelo cuando se complete el valor real observado.",
-        color="#F5F3FF",
-        borde="#7C3AED",
+    col_objetivo, col_ciclo = st.columns([1, 1])
+    with col_objetivo:
+        mostrar_tarjeta(
+            "Qué problema resuelve",
+            "La app estima una variable numérica: la probabilidad de inundación. "
+            "Para ello usa factores de riesgo como lluvia, drenaje, urbanización, presas, planificación o vulnerabilidad costera.",
+            color="#E0F2FE",
+            borde="#0284C7",
+        )
+    with col_ciclo:
+        mostrar_tarjeta(
+            "Qué ciclo cubre",
+            "Permite predecir, guardar feedback, comparar con valores reales, monitorizar errores, "
+            "guardar datos en base de datos y preparar casos validados para futuros reentrenamientos.",
+            color="#ECFDF5",
+            borde="#059669",
+        )
+
+    st.markdown(
+        """
+        <div class="app-flow">
+            <div><strong>1. Explorar</strong><span>EDA y comprensión del dataset</span></div>
+            <div><strong>2. Entrenar</strong><span>Modelo de regresión y métricas</span></div>
+            <div><strong>3. Usar</strong><span>Predicción desde Streamlit</span></div>
+            <div><strong>4. Medir</strong><span>Feedback, valor real y errores</span></div>
+            <div><strong>5. Preparar</strong><span>Pipeline de ingesta para reentrenar</span></div>
+        </div>
+        """,
+        unsafe_allow_html=True,
     )
 
-    tab_pred, tab_real, tab_monitor, tab_pipeline, tab_archivos = st.tabs(
+    tab_resumen, tab_modelo, tab_app, tab_metricas, tab_pipeline, tab_ejemplo = st.tabs(
         [
-            "Cómo predecir",
-            "Cuándo guardar valor real",
-            "Cómo leer monitorización",
-            "Pipeline",
-            "Qué se guarda",
+            "Qué hace",
+            "Modelo y EDA",
+            "Cómo se usa",
+            "Cómo interpretar",
+            "Pipeline y features",
+            "Ejemplo práctico",
         ]
     )
 
-    with tab_pred:
-        st.subheader("Cómo hacer una predicción")
+    with tab_resumen:
+        st.subheader("Qué hace esta aplicación")
         st.markdown(
             """
-            1. Entra en la vista **Predicción**.
-            2. Revisa los controles de cada factor.
-            3. Si no conoces un factor, deja el valor recomendado.
-            4. Pulsa **Calcular riesgo de inundación**.
-            5. La app mostrará una probabilidad estimada, por ejemplo `51.14%`.
+            La aplicación convierte el trabajo de notebooks en una herramienta usable.
 
-            Ese porcentaje es una estimación estadística del modelo, no una alerta oficial.
+            - **Recibe datos de una zona** mediante controles sencillos.
+            - **Calcula una probabilidad estimada de inundación** usando el modelo entrenado.
+            - **Guarda cada predicción** para poder revisarla después.
+            - **Permite añadir el valor real observado** cuando se conozca.
+            - **Compara predicción y realidad** para monitorizar si el modelo funciona bien.
+            - **Guarda los datos recogidos en SQLite** para demostrar persistencia estructurada.
+            - **Prepara un dataset de reentrenamiento** con los casos que ya tienen valor real.
             """
         )
 
-    with tab_real:
-        st.subheader("Qué significa el valor real")
+        st.subheader("Por qué esto es regresión")
+        st.write(
+            "Es un problema de regresión porque el modelo no clasifica en categorías cerradas, sino que predice "
+            "un número continuo: `FloodProbability`. La app lo muestra como porcentaje para que sea más fácil de leer."
+        )
+
+    with tab_modelo:
+        st.subheader("Qué aporta el EDA")
+        st.write(
+            "El EDA sirve para conocer el dataset antes de entrenar. Ayuda a ver la distribución de la variable objetivo, "
+            "detectar patrones, revisar correlaciones y comprobar si las variables tienen sentido para explicar el riesgo."
+        )
+        eda_df = pd.DataFrame(
+            [
+                {
+                    "Elemento": "Distribución de FloodProbability",
+                    "Para qué sirve": "Ver si los valores están concentrados, equilibrados o tienen comportamientos raros.",
+                },
+                {
+                    "Elemento": "Correlaciones",
+                    "Para qué sirve": "Identificar qué factores se relacionan más con la probabilidad de inundación.",
+                },
+                {
+                    "Elemento": "Scatter plots",
+                    "Para qué sirve": "Ver relaciones entre variables y detectar tendencias visuales.",
+                },
+                {
+                    "Elemento": "Histogramas",
+                    "Para qué sirve": "Entender cómo se distribuyen los factores de riesgo.",
+                },
+            ]
+        )
+        st.dataframe(eda_df, width="stretch", hide_index=True)
+
+        st.subheader("Cómo se construyó el modelo")
         st.markdown(
             """
-            El **valor real** es el dato observado o confirmado después de hacer una predicción.
+            El proyecto parte de un modelo baseline funcional y después compara técnicas más avanzadas:
 
-            Ejemplo:
+            - **Linear Regression:** modelo base usado por la app.
+            - **Random Forest / Gradient Boosting / XGBoost / LightGBM:** modelos ensemble comparados en notebooks.
+            - **Validación cruzada K-Fold:** divide los datos en varias particiones para medir si el rendimiento es estable.
+            - **Optimización de hiperparámetros:** prueba combinaciones de configuración para intentar mejorar resultados.
 
-            - El modelo predice `51%`.
-            - Más tarde se confirma que el valor real fue `55%`.
-            - La app calcula un error de `4 puntos porcentuales`.
-
-            Marca **Guardar también el valor real observado** solo si tienes ese dato real.
-            Si no lo conoces, deja la casilla sin marcar.
+            La app usa el modelo guardado en `models/flood_baseline_model.joblib`. Los notebooks justifican la selección y el rendimiento.
             """
         )
 
-    with tab_monitor:
-        st.subheader("Cómo interpretar la monitorización")
-        st.markdown(
-            """
-            La vista **Monitorización** muestra:
+    with tab_app:
+        st.subheader("Cómo se usa la app")
+        uso_df = pd.DataFrame(
+            [
+                {
+                    "Vista": "Predicción",
+                    "Qué haces": "Introduces los factores de riesgo y calculas una estimación.",
+                    "Qué obtienes": "Probabilidad estimada de inundación y registro guardado.",
+                },
+                {
+                    "Vista": "Monitorización",
+                    "Qué haces": "Añades valores reales cuando estén disponibles.",
+                    "Qué obtienes": "Errores y métricas acumuladas del modelo.",
+                },
+                {
+                    "Vista": "Base de datos",
+                    "Qué haces": "Compruebas que las predicciones se han guardado.",
+                    "Qué obtienes": "Conteo de registros y últimos datos almacenados.",
+                },
+                {
+                    "Vista": "Pipeline de reentrenamiento",
+                    "Qué haces": "Ejecutas el pipeline de ingesta con casos validados.",
+                    "Qué obtienes": "Dataset preparado para futuros reentrenamientos.",
+                },
+                {
+                    "Vista": "Informes técnicos",
+                    "Qué haces": "Revisas notebooks y resultados del trabajo técnico.",
+                    "Qué obtienes": "EDA, modelado, métricas y conclusiones.",
+                },
+            ]
+        )
+        st.dataframe(uso_df, width="stretch", hide_index=True)
 
-            - **Predicciones guardadas:** total de usos registrados.
-            - **Con valor real:** predicciones que sí pueden compararse contra la realidad.
-            - **Sin valor real:** predicciones pendientes de comprobar.
-            - **MAE / RMSE:** error acumulado cuando hay valores reales.
-            - **R2:** calidad global de ajuste, solo si hay suficientes valores reales.
+        st.info(
+            "Si no conoces el valor real, puedes usar la app igualmente. El registro queda pendiente y se puede completar más tarde."
+        )
 
-            Si no hay valores reales, la monitorización puede contar predicciones, pero no medir performance.
-            """
+    with tab_metricas:
+        st.subheader("Cómo interpretar el rendimiento")
+        metricas_df = pd.DataFrame(
+            [
+                {
+                    "Métrica": "MAE",
+                    "Lectura simple": "Error medio absoluto. Cuanto más bajo, mejor.",
+                },
+                {
+                    "Métrica": "RMSE",
+                    "Lectura simple": "Penaliza más los errores grandes. Cuanto más bajo, mejor.",
+                },
+                {
+                    "Métrica": "R²",
+                    "Lectura simple": "Indica cuánto explica el modelo. Más cerca de 1 suele ser mejor.",
+                },
+                {
+                    "Métrica": "Overfitting",
+                    "Lectura simple": "Compara train y validación. Si la diferencia es baja, el modelo generaliza mejor.",
+                },
+            ]
+        )
+        st.dataframe(metricas_df, width="stretch", hide_index=True)
+
+        st.write(
+            "En la app, estas métricas solo tienen sentido cuando existen valores reales. Sin valor real, la app puede guardar "
+            "predicciones, pero no puede saber si el modelo acertó."
         )
 
     with tab_pipeline:
-        st.subheader("Cómo funciona el pipeline de reentrenamiento")
+        st.subheader("Por qué existe el pipeline de ingesta")
+        st.write(
+            "Un modelo no debería quedarse congelado para siempre. Si la app se usa y después se conocen valores reales, "
+            "esos casos pueden convertirse en datos supervisados nuevos. El pipeline ordena ese proceso."
+        )
+
         st.markdown(
             """
-            La vista **Pipeline de reentrenamiento** revisa los registros nuevos generados por la app.
+            **Qué hace el botón `Ejecutar pipeline de ingesta`:**
 
-            - Si un registro no tiene valor real, queda como **pendiente**.
-            - Si tiene valor real, queda como **listo para reentrenar**.
-            - El dataset de reentrenamiento usa las variables predictoras y el valor real como `FloodProbability`.
-            - La predicción del modelo se conserva como referencia, pero no se usa como objetivo de entrenamiento.
+            1. Revisa los registros generados por la app.
+            2. Se queda solo con los que tienen valor real confirmado.
+            3. Construye un dataset con la variable objetivo `FloodProbability`.
+            4. Añade indicadores de feature engineering.
+            5. Guarda `data/processed/retraining_dataset.csv`.
+
+            Si todavia no hay valores reales confirmados, el boton aparece bloqueado. Eso significa que el pipeline
+            existe, pero esta esperando datos validos para preparar el dataset.
+
+            Este botón **no cambia el modelo activo**. Deja los datos preparados para un reentrenamiento posterior.
             """
         )
 
-    with tab_archivos:
-        st.subheader("Qué archivos genera la app")
+        st.subheader("Qué es feature engineering en esta app")
+        st.write(
+            "Feature engineering significa crear variables nuevas a partir de las originales para ayudar a interpretar o mejorar "
+            "el modelo. Aquí no pedimos al usuario más datos: agrupamos los factores existentes en indicadores compuestos."
+        )
+        features_df = pd.DataFrame(
+            [
+                {"Indicador": "risk_score_sum", "Qué resume": "Suma total de factores de riesgo."},
+                {"Indicador": "risk_score_mean", "Qué resume": "Riesgo medio general."},
+                {"Indicador": "water_pressure_risk", "Qué resume": "Lluvia, drenaje, ríos, sedimentación y cuencas."},
+                {"Indicador": "environmental_risk", "Qué resume": "Deforestación, humedales, clima y prácticas agrícolas."},
+                {"Indicador": "infrastructure_risk", "Qué resume": "Presas, drenaje e infraestructura deteriorada."},
+                {"Indicador": "planning_risk", "Qué resume": "Urbanización, planificación, ocupación y factores políticos."},
+                {"Indicador": "exposure_risk", "Qué resume": "Población expuesta, costa, deslizamientos y preparación."},
+            ]
+        )
+        st.dataframe(features_df, width="stretch", hide_index=True)
+
+    with tab_ejemplo:
+        st.subheader("Ejemplo práctico: de una predicción a datos para reentrenar")
+        st.write(
+            "Imagina que una consultora quiere evaluar una zona antes de una temporada de lluvias. "
+            "La app le permite hacer una estimación, guardarla y convertirla más tarde en información útil para mejorar el modelo."
+        )
+
+        ejemplo_df = pd.DataFrame(
+            [
+                {
+                    "Paso": "1. Evaluar una zona",
+                    "Qué haces": "Entras en Predicción y ajustas los factores de riesgo.",
+                    "Cómo interpretarlo": "Valores altos indican más presencia del factor: más lluvia, peor drenaje, más urbanización, etc.",
+                },
+                {
+                    "Paso": "2. Calcular riesgo",
+                    "Qué haces": "Pulsas Calcular riesgo de inundación.",
+                    "Cómo interpretarlo": "La app devuelve una probabilidad estimada. No es una alerta oficial, es una estimación estadística.",
+                },
+                {
+                    "Paso": "3. Guardar seguimiento",
+                    "Qué haces": "La predicción se guarda automáticamente.",
+                    "Cómo interpretarlo": "Aunque no haya valor real todavía, ya existe un registro para revisar después.",
+                },
+                {
+                    "Paso": "4. Añadir valor real",
+                    "Qué haces": "Cuando se conozca el dato observado, lo completas en Monitorización.",
+                    "Cómo interpretarlo": "La app ya puede comparar lo que predijo con lo que pasó realmente.",
+                },
+                {
+                    "Paso": "5. Leer métricas",
+                    "Qué haces": "Revisas MAE, RMSE y R² en Monitorización.",
+                    "Cómo interpretarlo": "MAE/RMSE bajos indican menor error. R² ayuda a ver si el modelo explica bien la variación.",
+                },
+                {
+                    "Paso": "6. Comprobar persistencia",
+                    "Qué haces": "Entras en Base de datos.",
+                    "Cómo interpretarlo": "Ves si la predicción quedó guardada en SQLite y cuántos registros hay.",
+                },
+                {
+                    "Paso": "7. Preparar reentrenamiento",
+                    "Qué haces": "En Pipeline de reentrenamiento pulsas Ejecutar pipeline de ingesta.",
+                    "Cómo interpretarlo": "Si el boton esta activo, hay casos con valor real. Solo esos casos pasan al dataset validado.",
+                },
+            ]
+        )
+        st.dataframe(ejemplo_df, width="stretch", hide_index=True)
+
+        st.subheader("Qué haría después el equipo")
         st.markdown(
             """
-            La aplicación guarda datos locales en dos archivos:
+            - Revisar si hay suficientes casos validados.
+            - Comparar las métricas nuevas con las del modelo actual.
+            - Decidir si merece la pena reentrenar.
+            - Entrenar una nueva versión en notebook o script.
+            - Sustituir el modelo activo solo si mejora de forma clara.
 
-            ```text
-            data/feedback/predicciones.csv
-            data/new_data/nuevos_registros.csv
-            data/processed/retraining_dataset.csv
-            ```
-
-            `predicciones.csv` sirve para monitorizar errores y rendimiento.
-
-            `nuevos_registros.csv` sirve como base para futuros reentrenamientos.
-
-            `retraining_dataset.csv` se genera desde el pipeline cuando existen registros con valor real.
-
-            Estos archivos son locales y están ignorados por Git, por lo que no se suben al repositorio.
+            La idea es que la app no sea solo un formulario de predicción, sino una herramienta para cerrar el ciclo:
+            **predecir, observar, medir y preparar mejores datos**.
             """
         )
 
@@ -651,7 +866,7 @@ def mostrar_prediccion(nombre_usuario):
                     for feature in FEATURE_COLUMNS
                 ]
             )
-            st.dataframe(guia, use_container_width=True, hide_index=True)
+            st.dataframe(guia, width="stretch", hide_index=True)
 
         st.markdown("### Seguimiento del resultado real")
         st.caption(
@@ -678,6 +893,7 @@ def mostrar_prediccion(nombre_usuario):
         return
 
     input_df = pd.DataFrame([valores], columns=FEATURE_COLUMNS)
+    engineered_summary = summarize_engineered_features(input_df)
     prediccion_raw = float(modelo.predict(input_df)[0])
     prediccion = max(0.0, min(1.0, prediccion_raw))
     porcentaje, nivel_riesgo, explicacion_riesgo = interpretar_riesgo(prediccion)
@@ -700,6 +916,28 @@ def mostrar_prediccion(nombre_usuario):
         error_pct = abs(valor_real - prediccion) * 100
         st.write(f"Diferencia frente al valor real introducido: {error_pct:.2f} puntos porcentuales.")
 
+    with st.expander("Lectura automatica de factores compuestos"):
+        st.write(
+            "La app agrupa los factores introducidos en indicadores mas faciles de leer. "
+            "Estos indicadores forman la capa de feature engineering preparada para futuros reentrenamientos."
+        )
+        feature_labels = {
+            "risk_score_sum": "Riesgo acumulado total",
+            "risk_score_mean": "Riesgo medio general",
+            "water_pressure_risk": "Presion hidrologica",
+            "environmental_risk": "Riesgo ambiental",
+            "infrastructure_risk": "Riesgo de infraestructura",
+            "planning_risk": "Riesgo de planificacion",
+            "exposure_risk": "Exposicion y vulnerabilidad",
+        }
+        engineered_display = pd.DataFrame(
+            [
+                {"Indicador": feature_labels.get(feature, feature), "Valor": round(value, 2)}
+                for feature, value in engineered_summary.items()
+            ]
+        )
+        st.dataframe(engineered_display, width="stretch", hide_index=True)
+
     timestamp = datetime.now().isoformat(timespec="seconds")
     prediction_id = crear_prediction_id()
     fila_base = {
@@ -720,9 +958,14 @@ def mostrar_prediccion(nombre_usuario):
 
     guardar_fila_csv(FEEDBACK_PATH, fila_feedback)
     guardar_fila_csv(NEW_DATA_PATH, fila_base)
+    db_ok, db_message = guardar_registro_base_datos(fila_feedback)
     if "cargar_feedback" in globals():
         cargar_feedback.clear()
     st.success("Resultado guardado para seguimiento del modelo y futuros reentrenamientos.")
+    if db_ok:
+        st.caption(db_message)
+    else:
+        st.warning(db_message)
 
 
 def mostrar_informes():
@@ -996,10 +1239,52 @@ def mostrar_monitorizacion():
             "error": "error absoluto (%)",
         }
     )
-    st.dataframe(feedback_display.fillna(""), use_container_width=True, hide_index=True)
+    st.dataframe(feedback_display.fillna(""), width="stretch", hide_index=True)
 
     with st.expander("Ubicación del archivo de feedback"):
         st.code(str(FEEDBACK_PATH), language="text")
+
+
+def mostrar_base_datos():
+    st.header("Base de datos de la aplicacion")
+    st.write(
+        "Esta vista comprueba que los datos recogidos por la app tambien se guardan en una base de datos local. "
+        "Los CSV se mantienen como respaldo, pero SQLite permite demostrar persistencia estructurada."
+    )
+
+    try:
+        summary = database.get_database_summary(DATABASE_PATH)
+    except Exception as exc:
+        st.error(f"No se pudo abrir la base de datos local: {exc}")
+        return
+
+    col_estado, col_total, col_validados, col_pendientes = st.columns(4)
+    col_estado.metric("Estado", "Activa" if summary["exists"] else "Pendiente")
+    col_total.metric("Predicciones en BD", summary["total_predictions"])
+    col_validados.metric("Con valor real", summary["validated_predictions"])
+    col_pendientes.metric("Pendientes", summary["pending_predictions"])
+
+    st.info(
+        "Cada vez que se calcula una prediccion, la app guarda en SQLite el identificador, fecha, consultor, "
+        "modelo usado, valores introducidos, prediccion, valor real si existe y estado del registro."
+    )
+
+    st.subheader("Registros recientes en la base de datos")
+    recent_df = database.load_recent_predictions(DATABASE_PATH)
+    if recent_df.empty:
+        st.warning("Todavia no hay registros en la base de datos. Haz una prediccion para crear el primer registro.")
+    else:
+        for col in ["prediction", "actual_value", "error"]:
+            if col in recent_df.columns:
+                recent_df[col] = pd.to_numeric(recent_df[col], errors="coerce") * 100
+        st.dataframe(recent_df.fillna(""), width="stretch", hide_index=True)
+
+    with st.expander("Ubicacion y esquema"):
+        st.code(str(DATABASE_PATH), language="text")
+        st.write(
+            "Tabla principal: `app_predictions`. Tabla auxiliar: `app_events`, usada para registrar guardados, "
+            "actualizaciones y borrados."
+        )
 
 
 @st.cache_data(ttl=5)
@@ -1027,7 +1312,7 @@ def construir_dataset_reentrenamiento(new_data_df):
     if validated_df.empty:
         return pd.DataFrame()
 
-    retraining_df = validated_df[FEATURE_COLUMNS].copy()
+    retraining_df = add_engineered_features(validated_df[FEATURE_COLUMNS].copy())
     retraining_df["FloodProbability"] = validated_df["actual_value"].astype(float)
     return retraining_df
 
@@ -1038,6 +1323,11 @@ def guardar_dataset_reentrenamiento(retraining_df, path):
     path.parent.mkdir(parents=True, exist_ok=True)
     retraining_df.to_csv(path, index=False)
     return True
+
+
+@st.cache_data(show_spinner=False)
+def generar_explorador_visual_html(df):
+    return pyg.to_html(df, appearance="dark", theme_key="g2", default_tab="vis")
 
 
 def mostrar_pipeline_reentrenamiento():
@@ -1051,10 +1341,32 @@ def mostrar_pipeline_reentrenamiento():
         "Para reentrenamiento se usa el valor real observado como `FloodProbability`."
     )
 
+    st.caption(
+        "El archivo generado incluye las variables originales y una capa de feature engineering "
+        "con indicadores compuestos de riesgo ambiental, infraestructura, planificacion y exposicion."
+    )
+
+    st.markdown(
+        """
+        <div class="app-flow">
+            <div><strong>1. Se calcula</strong><span>La app guarda una prediccion nueva.</span></div>
+            <div><strong>2. Se confirma</strong><span>Se anade el valor real observado.</span></div>
+            <div><strong>3. Se activa</strong><span>El boton de ingesta queda disponible.</span></div>
+            <div><strong>4. Se prepara</strong><span>Se crea el dataset para reentrenar.</span></div>
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
+
     new_data_df = cargar_nuevos_datos(NEW_DATA_PATH)
     if new_data_df.empty:
         st.warning(
             "Todavía no hay registros nuevos. Genera predicciones desde la vista Predicción para alimentar el pipeline."
+        )
+        st.subheader("Accion del pipeline")
+        st.button("Ejecutar pipeline de ingesta", type="primary", disabled=True)
+        st.caption(
+            "El boton se activara cuando exista al menos una prediccion guardada con valor real observado."
         )
         return
 
@@ -1068,10 +1380,21 @@ def mostrar_pipeline_reentrenamiento():
     col_pendientes.metric("Pendientes de valor real", registros_pendientes)
 
     st.subheader("Estado del pipeline")
+    st.caption(
+        "Al ejecutar el pipeline de ingesta, la app prepara automaticamente los casos que ya tienen "
+        "valor real confirmado y los deja listos para usarlos en un futuro reentrenamiento."
+    )
+
     if registros_validados.empty:
         st.warning(
             "Hay registros nuevos, pero ninguno tiene valor real. Completa valores reales en Monitorización "
             "para poder generar un dataset supervisado."
+        )
+        st.subheader("Accion del pipeline")
+        st.button("Ejecutar pipeline de ingesta", type="primary", disabled=True)
+        st.caption(
+            "Ahora mismo el pipeline esta esperando el valor real. Cuando lo anadas en Monitorizacion, "
+            "este boton pasara a estar disponible."
         )
     else:
         retraining_df = construir_dataset_reentrenamiento(new_data_df)
@@ -1080,15 +1403,24 @@ def mostrar_pipeline_reentrenamiento():
         )
 
         preview_df = retraining_df.tail(20).copy()
-        st.dataframe(preview_df, use_container_width=True, hide_index=True)
+        st.dataframe(preview_df, width="stretch", hide_index=True)
 
         col_guardar, col_descargar = st.columns([1, 1])
         with col_guardar:
-            if st.button("Generar dataset de reentrenamiento"):
+            st.subheader("Accion del pipeline")
+            if st.button("Ejecutar pipeline de ingesta", type="primary"):
                 if guardar_dataset_reentrenamiento(retraining_df, RETRAINING_DATASET_PATH):
-                    st.success(f"Dataset generado en: {RETRAINING_DATASET_PATH}")
+                    st.success("Pipeline de ingesta ejecutado correctamente.")
+                    st.write(
+                        f"La app ha preparado {len(retraining_df)} casos con valor real confirmado "
+                        "y ha creado el archivo que se usara como base para futuros reentrenamientos."
+                    )
+                    st.info(
+                        "Este boton no cambia el modelo actual. Solo ordena y guarda los datos nuevos "
+                        "que ya estan confirmados."
+                    )
                 else:
-                    st.error("No se pudo generar el dataset de reentrenamiento.")
+                    st.error("No se pudo ejecutar el pipeline de ingesta.")
 
         with col_descargar:
             csv_bytes = retraining_df.to_csv(index=False).encode("utf-8")
@@ -1117,7 +1449,7 @@ def mostrar_pipeline_reentrenamiento():
     for col in ["prediction", "actual_value"]:
         if col in display_df.columns:
             display_df[col] = pd.to_numeric(display_df[col], errors="coerce") * 100
-    st.dataframe(display_df.fillna(""), use_container_width=True, hide_index=True)
+    st.dataframe(display_df.fillna(""), width="stretch", hide_index=True)
 
     with st.expander("Archivos del pipeline"):
         st.code(str(NEW_DATA_PATH), language="text")
@@ -1136,60 +1468,101 @@ def mostrar_datos(num_rows):
         return
 
     df_preview = cargar_preview(DATA_PATH, num_rows)
-    tab1, tab2 = st.tabs(["Tabla de datos", "Explorador interactivo"])
+    tab1, tab2 = st.tabs(["Tabla de datos", "Explorador visual"])
 
     with tab1:
         st.write(f"Mostrando las primeras {num_rows} filas del dataset:")
-        st.dataframe(df_preview, use_container_width=True)
+        st.dataframe(df_preview, width="stretch")
 
     with tab2:
+        st.subheader("Explorador visual del dataset")
+        st.write(
+            "Esta vista permite analizar el dataset sin escribir codigo: seleccionar columnas, cruzar variables "
+            "y crear graficos rapidos para entender patrones antes o despues del modelado."
+        )
+        mostrar_tarjeta(
+            "Para que sirve",
+            "Ayuda a reforzar el EDA desde la propia aplicacion: distribuciones, relaciones entre variables, "
+            "posibles correlaciones y comparaciones visuales de la variable objetivo.",
+            color="#E0F2FE",
+            borde="#0891B2",
+        )
+
         if pyg is None:
-            st.warning("PyGWalker no está instalado. La app puede seguir funcionando sin esta vista.")
-            st.code("pip install pygwalker", language="bash")
+            st.info(
+                "La dependencia del explorador visual no esta instalada en este entorno. No afecta al predictor, la monitorizacion, "
+                "la base de datos ni el pipeline de ingesta."
+            )
+            st.write(
+                "Esta pestaña serviria para explorar el dataset de forma visual, creando graficos rapidos "
+                "a partir de las columnas. La tabla de datos sigue estando disponible en la pestaña anterior."
+            )
+            with st.expander("Instalacion para activar el explorador visual"):
+                st.code("pip install pygwalker", language="bash")
         else:
             import streamlit.components.v1 as components
 
-            pyg_html = pyg.walk(df_preview, output_type="html")
-            components.html(pyg_html, height=800, scrolling=True)
+            with st.spinner("Preparando explorador visual..."):
+                try:
+                    pyg_html = generar_explorador_visual_html(df_preview)
+                    components.html(pyg_html, height=820, scrolling=True)
+                except Exception as exc:
+                    st.error("No se pudo cargar el explorador visual en esta sesion.")
+                    st.caption(f"Detalle tecnico: {exc}")
 
 
-st.set_page_config(page_title="Análisis de Inundaciones", layout="wide")
+def main():
+    st.set_page_config(page_title="Análisis de Inundaciones", layout="wide")
+    aplicar_estilo_visual()
 
-st.sidebar.header("Panel de control")
-nombre_usuario = st.sidebar.text_input("Consultor a cargo:", value="Estudiante")
-vista = st.sidebar.radio(
-    "Vista",
-    ["Guía de uso", "Predicción", "Monitorización", "Pipeline de reentrenamiento", "Informes técnicos", "Datos"],
-)
+    st.sidebar.header("Panel de control")
+    nombre_usuario = st.sidebar.text_input("Consultor a cargo:", value="Estudiante")
+    vista = st.sidebar.radio(
+        "Vista",
+        [
+            "Guía del proyecto",
+            "Predicción",
+            "Monitorización",
+            "Base de datos",
+            "Pipeline de reentrenamiento",
+            "Informes técnicos",
+            "Datos",
+        ],
+    )
 
-num_rows = st.sidebar.slider(
-    "Filas a cargar en la vista de datos:",
-    min_value=5,
-    max_value=1000,
-    value=50,
-    step=5,
-)
+    num_rows = st.sidebar.slider(
+        "Filas a cargar en la vista de datos:",
+        min_value=5,
+        max_value=1000,
+        value=50,
+        step=5,
+    )
 
-modo_vista = st.sidebar.selectbox(
-    "Modo de visualización:",
-    options=["Estándar", "Texto grande", "Alto contraste"],
-)
-aplicar_accesibilidad(modo_vista)
+    modo_vista = st.sidebar.selectbox(
+        "Modo de visualización:",
+        options=["Estándar", "Texto grande", "Alto contraste"],
+    )
+    aplicar_accesibilidad(modo_vista)
 
-st.title("Dashboard de Consultoría: Análisis de Inundaciones")
-st.caption(f"Presentación de resultados del Grupo 1. Consultor activo: {nombre_usuario}")
+    mostrar_cabecera(nombre_usuario)
 
-if vista == "Guía de uso":
-    mostrar_guia_uso()
-elif vista == "Predicción":
-    mostrar_prediccion(nombre_usuario)
-elif vista == "Monitorización":
-    mostrar_monitorizacion()
-elif vista == "Pipeline de reentrenamiento":
-    mostrar_pipeline_reentrenamiento()
-elif vista == "Informes técnicos":
-    mostrar_informes()
-else:
-    mostrar_datos(num_rows)
+    if vista in ["Guía de uso", "Guía del proyecto"]:
+        mostrar_guia_uso()
+    elif vista == "Predicción":
+        mostrar_prediccion(nombre_usuario)
+    elif vista == "Monitorización":
+        mostrar_monitorizacion()
+    elif vista == "Base de datos":
+        mostrar_base_datos()
+    elif vista == "Pipeline de reentrenamiento":
+        mostrar_pipeline_reentrenamiento()
+    elif vista == "Informes técnicos":
+        mostrar_informes()
+    else:
+        mostrar_datos(num_rows)
+
+
+if __name__ == "__main__":
+    main()
 
 
