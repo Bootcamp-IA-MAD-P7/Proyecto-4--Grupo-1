@@ -1,30 +1,568 @@
-html, body, [data-testid="stApp"] {
-  background: #0b1220 !important;
-  color: #e6e6e6 !important;
+html, body,
+.stApp,
+[data-testid="stApp"],
+[data-testid="stAppViewContainer"] {
+  color: #eef6fb !important;
+  background:
+    linear-gradient(180deg, rgba(6, 17, 28, 0.56), rgba(8, 22, 34, 0.78)),
+    var(--weather-bg),
+    #07111d !important;
+  background-size: cover !important;
+  background-position: center top !important;
+  background-attachment: fixed !important;
 }
 
 section.main {
   background: transparent !important;
 }
 
+[data-testid="stHeader"],
+[data-testid="stToolbar"],
+[data-testid="stDecoration"],
+[data-testid="stMain"] {
+  background: transparent !important;
+}
+
+[data-testid="stMainBlockContainer"] {
+  background: rgba(7, 18, 30, 0.58);
+  border: 1px solid rgba(148, 199, 213, 0.16);
+  border-radius: 8px;
+  margin-top: 5.25rem;
+  margin-bottom: 2rem;
+  box-shadow: 0 18px 46px rgba(0, 0, 0, 0.28);
+}
+
 .block-container {
-  padding-top: 1rem;
-  padding-left: 1rem;
-  padding-right: 1rem;
+  max-width: 1320px;
+  padding-top: 1.25rem;
+  padding-left: 1.4rem;
+  padding-right: 1.4rem;
+  padding-bottom: 3rem;
 }
 
 * {
   font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif !important;
+  letter-spacing: 0 !important;
+}
+
+.material-icons,
+.material-symbols-rounded,
+.material-symbols-outlined,
+[class*="material-icons"],
+[class*="material-symbols"],
+[data-testid="stIconMaterial"] {
+  font-family: "Material Symbols Rounded", "Material Icons" !important;
+  font-weight: normal !important;
+  font-style: normal !important;
+  letter-spacing: normal !important;
+}
+
+h1, h2, h3 {
+  color: #f7fbff !important;
+}
+
+h1 {
+  font-size: 2.35rem !important;
+  font-weight: 760 !important;
+}
+
+h2 {
+  font-size: 1.55rem !important;
+  font-weight: 720 !important;
+}
+
+h3 {
+  font-size: 1.15rem !important;
+  font-weight: 700 !important;
+}
+
+.app-hero {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 1.5rem;
+  padding: 1.6rem 1.8rem;
+  margin-bottom: 1.35rem;
+  background:
+    linear-gradient(135deg, rgba(8, 35, 52, 0.92), rgba(5, 18, 30, 0.72)),
+    radial-gradient(circle at top right, rgba(45, 212, 191, 0.18), transparent 38%);
+  border: 1px solid rgba(148, 199, 213, 0.26);
+  border-radius: 8px;
+  box-shadow: 0 18px 44px rgba(0, 0, 0, 0.26);
+}
+
+.app-hero h1 {
+  margin: 0.2rem 0 0.55rem;
+  max-width: 820px;
+  color: #ffffff !important;
+  font-size: 2.45rem !important;
+  line-height: 1.05 !important;
+  font-weight: 820 !important;
+}
+
+.app-hero__eyebrow {
+  margin: 0 !important;
+  color: #67e8f9 !important;
+  font-size: 0.78rem;
+  font-weight: 800;
+  text-transform: uppercase;
+}
+
+.app-hero__subtitle {
+  margin: 0 !important;
+  max-width: 760px;
+  color: #d9eaf2 !important;
+}
+
+.app-hero__meta {
+  min-width: 150px;
+  padding: 0.7rem 0.85rem;
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  border-radius: 8px;
+  text-align: right;
+}
+
+.app-hero__meta span,
+.app-hero__meta strong {
+  display: block;
+  color: #f8fbff !important;
+}
+
+.app-hero__meta span {
+  font-size: 0.78rem;
+  color: #b8d8e4 !important;
+}
+
+.app-flow {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 0.75rem;
+  margin: 1rem 0 1.35rem;
+}
+
+.app-flow div {
+  min-height: 96px;
+  padding: 0.85rem;
+  background: rgba(5, 20, 33, 0.82);
+  border: 1px solid rgba(125, 211, 252, 0.24);
+  border-radius: 8px;
+}
+
+.app-flow strong,
+.app-flow span {
+  display: block;
+}
+
+.app-flow strong {
+  margin-bottom: 0.35rem;
+  color: #ffffff !important;
+  font-size: 0.98rem;
+}
+
+.app-flow span {
+  color: #cfe1ea !important;
+  font-size: 0.88rem;
+  line-height: 1.35;
+}
+
+p, li, span, label, div[data-testid="stMarkdownContainer"] {
+  color: inherit;
+}
+
+div[data-testid="stMarkdownContainer"] strong {
+  color: inherit;
+}
+
+div[data-testid="stMarkdownContainer"] p,
+div[data-testid="stMarkdownContainer"] li {
+  color: #f4f8fb;
+}
+
+div[data-testid="stCaptionContainer"],
+div[data-testid="stCaptionContainer"] p,
+div[data-testid="stCaptionContainer"] span,
+small {
+  color: #d9e6ef !important;
+}
+
+label,
+[data-testid="stWidgetLabel"],
+[data-testid="stWidgetLabel"] p {
+  color: #ffffff !important;
+}
+
+[data-testid="stSidebar"] {
+  background: rgba(5, 13, 22, 0.92) !important;
+  border-right: 1px solid rgba(175, 213, 230, 0.16) !important;
+}
+
+[data-testid="stSidebar"] label,
+[data-testid="stSidebar"] p,
+[data-testid="stSidebar"] span {
+  color: #eaf4f8 !important;
+}
+
+[data-testid="stMetric"] {
+  background: rgba(9, 24, 38, 0.78);
+  border: 1px solid rgba(135, 194, 211, 0.22);
+  border-radius: 8px;
+  padding: 0.85rem 1rem;
+  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.18);
+}
+
+[data-testid="stMetricLabel"] {
+  color: #b9d8e4 !important;
+}
+
+[data-testid="stMetricValue"] {
+  color: #ffffff !important;
+}
+
+div[data-testid="stAlert"] {
+  border-radius: 8px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+}
+
+div[data-testid="stAlert"] p,
+div[data-testid="stAlert"] li,
+div[data-testid="stAlert"] span {
+  color: #f4fbff !important;
 }
 
 button, input, textarea, select {
-  border-radius: 10px !important;
+  border-radius: 8px !important;
 }
 
-pre, code {
-  background: rgba(0,0,0,0.25) !important;
-  color: #e8f0ff !important;
-  border: 1px solid rgba(255,255,255,0.12) !important;
-  border-radius: 10px !important;
+div[data-baseweb="select"] > div,
+div[data-baseweb="select"] input,
+div[data-baseweb="select"] span {
+  color: #0f172a !important;
+  opacity: 1 !important;
+}
+
+div[data-baseweb="popover"],
+div[data-baseweb="popover"] ul,
+div[data-baseweb="menu"],
+ul[role="listbox"] {
+  background: #f8fafc !important;
+  color: #0f172a !important;
+}
+
+div[data-baseweb="popover"] li,
+div[data-baseweb="popover"] li *,
+li[role="option"],
+li[role="option"] *,
+div[role="option"],
+div[role="option"] * {
+  color: #0f172a !important;
+  background: #f8fafc !important;
+  opacity: 1 !important;
+}
+
+div[data-baseweb="popover"] li:hover,
+li[role="option"]:hover,
+div[role="option"]:hover {
+  background: #dbeafe !important;
+}
+
+div[data-baseweb="popover"] li[aria-selected="true"],
+li[role="option"][aria-selected="true"],
+div[role="option"][aria-selected="true"] {
+  background: #bfdbfe !important;
+}
+
+button {
+  color: #f8fbff !important;
+}
+
+button p,
+button span,
+button div {
+  color: inherit !important;
+}
+
+button[kind="secondary"],
+button[kind="secondaryFormSubmit"],
+.stButton > button:not(:disabled),
+.stDownloadButton > button:not(:disabled) {
+  background: rgba(8, 31, 48, 0.94) !important;
+  border: 1px solid rgba(125, 211, 252, 0.35) !important;
+  color: #f8fbff !important;
+}
+
+button[kind="secondaryFormSubmit"] *,
+button[data-testid="stBaseButton-secondaryFormSubmit"] *,
+button[data-testid="stBaseButton-secondaryFormSubmit"] p,
+button[data-testid="stBaseButton-secondaryFormSubmit"] span,
+button[data-testid="stBaseButton-secondaryFormSubmit"] div {
+  color: #f8fbff !important;
+  opacity: 1 !important;
+}
+
+.stButton > button,
+.stDownloadButton > button,
+button[kind="primary"] {
+  border: 1px solid rgba(103, 205, 218, 0.45) !important;
+  background: linear-gradient(135deg, #0e7490, #15803d) !important;
+  color: #ffffff !important;
+  font-weight: 700 !important;
+}
+
+.stButton > button:hover,
+.stDownloadButton > button:hover {
+  border-color: rgba(255, 255, 255, 0.72) !important;
+  filter: brightness(1.08);
+}
+
+.stButton > button:disabled,
+.stDownloadButton > button:disabled,
+button:disabled,
+button[disabled],
+button[aria-disabled="true"],
+[data-testid="stFormSubmitButton"] button:disabled,
+[data-testid="stFormSubmitButton"] button[disabled],
+[data-testid="stFormSubmitButton"] button[aria-disabled="true"] {
+  background: rgba(226, 232, 240, 0.96) !important;
+  color: #334155 !important;
+  border: 1px solid rgba(148, 163, 184, 0.8) !important;
+  opacity: 1 !important;
+  filter: none !important;
+}
+
+.stButton > button:disabled p,
+.stDownloadButton > button:disabled p,
+button:disabled p,
+button[disabled] p,
+.stButton > button:disabled span,
+.stDownloadButton > button:disabled span,
+button:disabled span,
+button[disabled] span,
+.stButton > button:disabled div,
+.stDownloadButton > button:disabled div,
+button:disabled div,
+button[disabled] div,
+.stButton > button:disabled *,
+.stDownloadButton > button:disabled *,
+button:disabled *,
+button[disabled] *,
+button[aria-disabled="true"] *,
+[data-testid="stFormSubmitButton"] button:disabled *,
+[data-testid="stFormSubmitButton"] button[disabled] *,
+[data-testid="stFormSubmitButton"] button[aria-disabled="true"] * {
+  color: #334155 !important;
+  opacity: 1 !important;
+}
+
+[data-testid="stDataFrame"],
+[data-testid="stTable"] {
+  background: rgba(6, 18, 30, 0.88);
+  border: 1px solid rgba(158, 207, 222, 0.24);
+  border-radius: 8px;
+  overflow: auto;
+  max-width: 100%;
+}
+
+.notebook-output {
+  width: 100%;
+  max-width: 100%;
+  overflow-x: auto;
+  overflow-y: hidden;
+  margin: 0.75rem 0 1.1rem;
+  padding: 0.8rem;
+  background: rgba(6, 18, 30, 0.9);
+  border: 1px solid rgba(158, 207, 222, 0.22);
+  border-radius: 8px;
+}
+
+.notebook-output table {
+  width: max-content;
+  min-width: 100%;
+  border-collapse: collapse;
+  color: #f8fbff !important;
+  background: rgba(6, 18, 30, 0.94) !important;
+}
+
+.notebook-output thead,
+.notebook-output tbody,
+.notebook-output tr,
+.notebook-output th,
+.notebook-output td {
+  background: rgba(6, 18, 30, 0.94) !important;
+  color: #f8fbff !important;
+  border-color: rgba(203, 213, 225, 0.18) !important;
+}
+
+.notebook-output th,
+.notebook-output td {
+  padding: 0.45rem 0.65rem !important;
+  white-space: nowrap !important;
+}
+
+.notebook-output pre {
+  margin: 0 !important;
+  white-space: pre-wrap !important;
+}
+
+pre {
+  background: rgba(0, 0, 0, 0.32) !important;
+  color: #ecf7ff !important;
+  border: 1px solid rgba(255, 255, 255, 0.14) !important;
+  border-radius: 8px !important;
   padding: 0.8rem !important;
+}
+
+pre code {
+  background: transparent !important;
+  color: inherit !important;
+  border: 0 !important;
+  padding: 0 !important;
+}
+
+p code,
+li code,
+div[data-testid="stAlert"] code,
+div[data-testid="stMarkdownContainer"] code {
+  display: inline !important;
+  background: rgba(5, 18, 30, 0.72) !important;
+  color: #ffffff !important;
+  border: 1px solid rgba(255, 255, 255, 0.16) !important;
+  border-radius: 5px !important;
+  padding: 0.08rem 0.32rem !important;
+  white-space: nowrap !important;
+  vertical-align: baseline !important;
+}
+
+div[data-testid="stExpander"] {
+  background: rgba(8, 21, 34, 0.68);
+  border: 1px solid rgba(146, 198, 211, 0.18);
+  border-radius: 8px;
+}
+
+div[data-testid="stExpander"] details,
+div[data-testid="stExpander"] summary {
+  background: rgba(7, 21, 34, 0.94) !important;
+  color: #f8fbff !important;
+}
+
+div[data-testid="stExpander"] summary *,
+div[data-testid="stExpander"] [data-testid="stMarkdownContainer"] p,
+div[data-testid="stExpander"] p,
+div[data-testid="stExpander"] li,
+div[data-testid="stExpander"] span {
+  color: #f8fbff !important;
+}
+
+div[data-testid="stTooltipHoverTarget"],
+div[data-testid="stTooltipHoverTarget"] *,
+[data-testid="InputInstructions"],
+[data-testid="InputInstructions"] * {
+  color: #e0f2fe !important;
+  opacity: 1 !important;
+}
+
+div[data-testid="stTooltipHoverTarget"] {
+  background: rgba(224, 242, 254, 0.22) !important;
+  border: 1px solid rgba(224, 242, 254, 0.62) !important;
+  border-radius: 999px !important;
+  box-shadow: 0 0 0 2px rgba(14, 116, 144, 0.24) !important;
+}
+
+[data-testid="stTooltipIcon"],
+[data-testid="stTooltipHoverTarget"] button,
+button[aria-label^="Help for"] {
+  width: 18px !important;
+  height: 18px !important;
+  min-width: 18px !important;
+  min-height: 18px !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  background: rgba(224, 242, 254, 0.26) !important;
+  border: 1px solid rgba(224, 242, 254, 0.72) !important;
+  border-radius: 999px !important;
+  box-shadow:
+    0 0 0 2px rgba(14, 116, 144, 0.28),
+    0 0 12px rgba(103, 232, 249, 0.26) !important;
+  opacity: 1 !important;
+  position: relative !important;
+}
+
+div[data-testid="stTooltipHoverTarget"] svg,
+div[data-testid="stTooltipHoverTarget"] path,
+svg[data-testid="stTooltipIcon"],
+[data-testid="stTooltipIcon"],
+[data-testid="stTooltipIcon"] * {
+  color: #f8fdff !important;
+  fill: #f8fdff !important;
+  stroke: #f8fdff !important;
+  opacity: 1 !important;
+}
+
+button[aria-label^="Help for"] svg {
+  opacity: 0 !important;
+}
+
+button[aria-label^="Help for"]::after {
+  content: "?";
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #06202f !important;
+  font-size: 13px;
+  font-weight: 900;
+  line-height: 1;
+}
+
+div[role="tooltip"],
+div[role="tooltip"] *,
+[data-baseweb="tooltip"],
+[data-baseweb="tooltip"] * {
+  background: #f8fafc !important;
+  color: #0f172a !important;
+  border-color: rgba(15, 23, 42, 0.16) !important;
+}
+
+@media (max-width: 640px) {
+  .block-container {
+    padding-left: 0.75rem;
+    padding-right: 0.75rem;
+  }
+
+  [data-testid="stMainBlockContainer"] {
+    margin-top: 4.75rem;
+  }
+
+  h1 {
+    font-size: 1.7rem !important;
+    line-height: 1.18 !important;
+  }
+
+  h2 {
+    font-size: 1.25rem !important;
+  }
+
+  h3 {
+    font-size: 1.05rem !important;
+  }
+
+  .app-flow {
+    grid-template-columns: 1fr;
+  }
+
+  .app-hero {
+    display: block;
+    padding: 1.15rem;
+  }
+
+  .app-hero h1 {
+    font-size: 1.9rem !important;
+  }
+
+  .app-hero__meta {
+    margin-top: 1rem;
+    text-align: left;
+  }
 }

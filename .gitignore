@@ -13,6 +13,13 @@ data/raw/*.zip
 data/processed/*.csv
 data/feedback/*.csv
 data/new_data/*.csv
+data/database/*.sqlite
+data/database/*.sqlite3
+data/database/*.db
+
+app/.streamlit/secrets.toml
+
+docs/internal/
 
 models/*.pkl
 models/*.joblib
