@@ -8,7 +8,18 @@ import joblib
 import nbformat
 import numpy as np
 import pandas as pd
+import sys
+from pathlib import Path
+
+sys.path.append(str(Path(__file__).resolve().parent.parent))
+
+
 import streamlit as st
+print(st.secrets.get("connections", {}).get("postgresql", {}))
+
+from src import db_insert
+
+
 from sklearn.metrics import mean_absolute_error, mean_squared_error, r2_score
 
 from paths import get_data_path
@@ -1180,3 +1191,5 @@ elif vista == "Informes técnicos":
     mostrar_informes()
 else:
     mostrar_datos(num_rows)
+
+
