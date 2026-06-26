@@ -294,6 +294,13 @@ Importante:
 - En local, la cola se gestiona desde CSV/SQLite.
 - Si ya existe un dataset procesado, la vista muestra `Descargar dataset procesado`.
 
+Notas de uso:
+
+- Las rutas internas que aparecen en algunos desplegables son informativas. Sirven para saber donde guarda o lee datos la aplicacion, pero no hay que copiarlas para usar la app.
+- En la version desplegada, PostgreSQL es la fuente persistente de feedback, monitorizacion y cola de pipeline.
+- En local, esas rutas apuntan a archivos del proyecto y ayudan a depurar o revisar el flujo durante el desarrollo.
+- La app evita mostrar esas rutas como bloques de codigo porque el boton de copiar no aporta valor para un usuario final.
+
 ## Feature engineering
 
 Implementacion:
