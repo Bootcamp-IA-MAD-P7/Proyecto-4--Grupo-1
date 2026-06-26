@@ -168,7 +168,7 @@ El baseline se mantiene como modelo productivo porque los modelos optimizados y 
 |---|---|
 | `Guia del proyecto` | Explica que hace la app, como se usa y como interpretar resultados |
 | `Prediccion` | Calcula la probabilidad estimada de inundacion |
-| `Monitorizacion` | Revisa feedback, metricas, valores reales y gestion de registros |
+| `Monitorizacion` | Revisa feedback, metricas, valores reales y gestion de registros desde CSV local o PostgreSQL en Render |
 | `Base de datos` | Comprueba el guardado estructurado en SQLite local o PostgreSQL en Render |
 | `Pipeline de reentrenamiento` | Prepara registros validados para futuros reentrenamientos |
 | `Informes tecnicos` | Muestra notebooks del proyecto con contexto |
@@ -189,6 +189,8 @@ El baseline se mantiene como modelo productivo porque los modelos optimizados y 
 ## Feedback y monitorizacion
 
 Cada prediccion queda guardada. Si el valor real todavia no se conoce, el registro queda pendiente. Cuando el valor real se incorpora, la app compara prediccion y realidad.
+
+En local, esta vista puede leer el CSV de feedback. En Render, cuando existe `DATABASE_URL`, lee los registros desde PostgreSQL para que metricas y graficas no dependan del sistema de archivos temporal del contenedor.
 
 Metricas usadas:
 

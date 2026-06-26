@@ -1048,6 +1048,17 @@ def cargar_feedback(path):
     return normalizar_feedback_df(feedback_df)
 
 
+def usar_base_datos_persistente():
+    return bool(database.get_database_backend(DATABASE_PATH).get("persistent"))
+
+
+@st.cache_data(ttl=5)
+def cargar_feedback_monitorizacion(path):
+    if usar_base_datos_persistente():
+        return database.load_monitoring_records(DATABASE_PATH)
+    return cargar_feedback(path)
+
+
 def mostrar_monitorizacion():
     st.header("Monitorización del modelo")
     st.write(
@@ -1060,9 +1071,10 @@ def mostrar_monitorizacion():
         "cuando alguna predicción tiene valor real guardado."
     )
 
-    feedback_df = cargar_feedback(FEEDBACK_PATH)
+    usa_bd_persistente = usar_base_datos_persistente()
+    feedback_df = cargar_feedback_monitorizacion(FEEDBACK_PATH)
     if feedback_df.empty:
-        backups = sorted(FEEDBACK_PATH.parent.glob(f"{FEEDBACK_PATH.stem}_backup_*.csv"))
+        backups = [] if usa_bd_persistente else sorted(FEEDBACK_PATH.parent.glob(f"{FEEDBACK_PATH.stem}_backup_*.csv"))
         if backups:
             st.warning(
                 "Se detectó un archivo de feedback anterior con formato incompatible o corrupto. "
@@ -1073,6 +1085,9 @@ def mostrar_monitorizacion():
             "`Predicción` para empezar a generar feedback."
         )
         return
+
+    if usa_bd_persistente:
+        st.caption("Monitorizacion cargada desde PostgreSQL persistente.")
 
     total_predicciones = len(feedback_df)
     feedback_df["actual_value"] = pd.to_numeric(feedback_df.get("actual_value"), errors="coerce")
@@ -1123,12 +1138,28 @@ def mostrar_monitorizacion():
             guardar_actualizacion = st.form_submit_button("Guardar valor real en esta predicción")
 
         if guardar_actualizacion:
-            ok, mensaje = actualizar_valor_real_feedback(
-                FEEDBACK_PATH,
-                prediction_id_seleccionado,
-                valor_real_pendiente_pct / 100,
-                NEW_DATA_PATH,
-            )
+            if usa_bd_persistente:
+                fila = pendientes_df[
+                    pendientes_df["prediction_id"].astype(str) == str(prediction_id_seleccionado)
+                ].iloc[0]
+                try:
+                    database.update_actual_value(
+                        DATABASE_PATH,
+                        str(prediction_id_seleccionado),
+                        valor_real_pendiente_pct / 100,
+                        float(fila.get("prediction")),
+                    )
+                    cargar_feedback_monitorizacion.clear()
+                    ok, mensaje = True, "Valor real guardado en PostgreSQL. Las metricas se han actualizado."
+                except Exception as exc:
+                    ok, mensaje = False, f"No se pudo actualizar PostgreSQL: {exc}"
+            else:
+                ok, mensaje = actualizar_valor_real_feedback(
+                    FEEDBACK_PATH,
+                    prediction_id_seleccionado,
+                    valor_real_pendiente_pct / 100,
+                    NEW_DATA_PATH,
+                )
             if ok:
                 st.success(mensaje)
                 st.rerun()
@@ -1188,12 +1219,25 @@ def mostrar_monitorizacion():
             guardar_edicion = st.form_submit_button("Actualizar valor real")
 
         if guardar_edicion:
-            ok, mensaje = actualizar_valor_real_feedback(
-                FEEDBACK_PATH,
-                registro_id,
-                nuevo_valor_real_pct / 100,
-                NEW_DATA_PATH,
-            )
+            if usa_bd_persistente:
+                try:
+                    database.update_actual_value(
+                        DATABASE_PATH,
+                        str(registro_id),
+                        nuevo_valor_real_pct / 100,
+                        float(registro.get("prediction")),
+                    )
+                    cargar_feedback_monitorizacion.clear()
+                    ok, mensaje = True, "Valor real actualizado en PostgreSQL."
+                except Exception as exc:
+                    ok, mensaje = False, f"No se pudo actualizar PostgreSQL: {exc}"
+            else:
+                ok, mensaje = actualizar_valor_real_feedback(
+                    FEEDBACK_PATH,
+                    registro_id,
+                    nuevo_valor_real_pct / 100,
+                    NEW_DATA_PATH,
+                )
             if ok:
                 st.success(mensaje)
                 st.rerun()
@@ -1215,7 +1259,15 @@ def mostrar_monitorizacion():
             if confirmacion_eliminar != "ELIMINAR":
                 st.error("No se eliminó nada. Debes escribir ELIMINAR para confirmar.")
             else:
-                ok, mensaje = eliminar_prediccion_registrada(FEEDBACK_PATH, NEW_DATA_PATH, registro_id)
+                if usa_bd_persistente:
+                    try:
+                        database.delete_prediction_record(DATABASE_PATH, str(registro_id))
+                        cargar_feedback_monitorizacion.clear()
+                        ok, mensaje = True, "Prediccion eliminada de PostgreSQL."
+                    except Exception as exc:
+                        ok, mensaje = False, f"No se pudo eliminar de PostgreSQL: {exc}"
+                else:
+                    ok, mensaje = eliminar_prediccion_registrada(FEEDBACK_PATH, NEW_DATA_PATH, registro_id)
                 if ok:
                     st.success(mensaje)
                     st.rerun()

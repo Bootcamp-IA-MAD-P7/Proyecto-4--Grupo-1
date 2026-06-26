@@ -339,6 +339,65 @@ def load_recent_predictions(db_path: Path, limit: int = 25) -> pd.DataFrame:
         )
 
 
+def load_monitoring_records(db_path: Path) -> pd.DataFrame:
+    init_database(db_path)
+    columns = [
+        "prediction_id",
+        "timestamp",
+        "consultor",
+        "model_name",
+        "model_version",
+        "model_file",
+        "prediction",
+        "actual_value",
+        "error",
+        "record_status",
+    ]
+
+    if _database_url():
+        with _connect_postgres() as conn:
+            with conn.cursor() as cur:
+                cur.execute(
+                    """
+                    SELECT
+                        prediction_id,
+                        timestamp,
+                        consultor,
+                        model_name,
+                        model_version,
+                        model_file,
+                        prediction,
+                        actual_value,
+                        error,
+                        record_status
+                    FROM app_predictions
+                    ORDER BY created_at ASC
+                    """
+                )
+                rows = cur.fetchall()
+        return pd.DataFrame(rows, columns=columns)
+
+    with sqlite3.connect(db_path) as conn:
+        return pd.read_sql_query(
+            """
+            SELECT
+                prediction_id,
+                timestamp,
+                consultor,
+                model_name,
+                model_version,
+                model_file,
+                prediction,
+                actual_value,
+                error,
+                record_status
+            FROM app_predictions
+            ORDER BY created_at ASC
+            """,
+            conn,
+        )
+
+
 def _nullable_float(value) -> float | None:
     if value in ("", None):
         return None
