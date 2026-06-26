@@ -292,7 +292,7 @@ Importante:
 - El pipeline prepara datos para una futura version.
 - En Render, la cola se gestiona desde PostgreSQL.
 - En local, la cola se gestiona desde CSV/SQLite.
-- El ultimo dataset generado se puede descargar desde la vista de pipeline.
+- Si ya existe un dataset procesado, la vista muestra `Descargar dataset procesado`.
 
 ## Feature engineering
 
