@@ -3,6 +3,7 @@ from src.database import (
     get_database_summary,
     load_monitoring_records,
     load_recent_predictions,
+    mark_predictions_ingested,
     save_prediction_record,
     update_actual_value,
 )
@@ -41,8 +42,14 @@ def test_sqlite_prediction_lifecycle(tmp_path):
     assert recent.loc[0, "record_status"] == "validated_for_retraining"
     assert monitoring.loc[0, "prediction_id"] == "pred_test_1"
 
+    updated = mark_predictions_ingested(db_path, ["pred_test_1"])
+    recent_after_ingest = load_recent_predictions(db_path)
+
+    assert updated == 1
+    assert recent_after_ingest.loc[0, "record_status"] == "ingested_for_retraining"
+
     delete_prediction_record(db_path, "pred_test_1")
     summary_after_delete = get_database_summary(db_path)
 
     assert summary_after_delete["total_predictions"] == 0
-    assert summary_after_delete["events"] == 3
+    assert summary_after_delete["events"] == 4

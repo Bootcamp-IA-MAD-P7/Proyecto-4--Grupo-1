@@ -398,6 +398,137 @@ def load_monitoring_records(db_path: Path) -> pd.DataFrame:
         )
 
 
+def load_pipeline_records(db_path: Path) -> pd.DataFrame:
+    records_df = _load_prediction_records_with_features(db_path)
+    if records_df.empty:
+        return records_df
+    records_df["actual_value"] = pd.to_numeric(records_df.get("actual_value"), errors="coerce")
+    if "record_status" in records_df.columns:
+        records_df = records_df[records_df["record_status"].astype(str) != "ingested_for_retraining"].copy()
+    return records_df
+
+
+def mark_predictions_ingested(db_path: Path, prediction_ids: Iterable[str]) -> int:
+    ids = [str(prediction_id) for prediction_id in prediction_ids if str(prediction_id).strip()]
+    if not ids:
+        return 0
+
+    init_database(db_path)
+    if _database_url():
+        with _connect_postgres() as conn:
+            with conn.cursor() as cur:
+                cur.execute(
+                    """
+                    UPDATE app_predictions
+                    SET record_status = 'ingested_for_retraining',
+                        updated_at = CURRENT_TIMESTAMP
+                    WHERE prediction_id = ANY(%s)
+                    """,
+                    (ids,),
+                )
+                updated = cur.rowcount
+                for prediction_id in ids:
+                    cur.execute(
+                        """
+                        INSERT INTO app_events (event_type, prediction_id, detail)
+                        VALUES ('prediction_ingested', %s, %s)
+                        """,
+                        (prediction_id, "Registro incorporado al dataset de reentrenamiento"),
+                    )
+            conn.commit()
+        return int(updated)
+
+    placeholders = ",".join("?" for _ in ids)
+    with sqlite3.connect(db_path) as conn:
+        cur = conn.execute(
+            f"""
+            UPDATE app_predictions
+            SET record_status = 'ingested_for_retraining',
+                updated_at = CURRENT_TIMESTAMP
+            WHERE prediction_id IN ({placeholders})
+            """,
+            ids,
+        )
+        updated = cur.rowcount
+        conn.executemany(
+            """
+            INSERT INTO app_events (event_type, prediction_id, detail)
+            VALUES ('prediction_ingested', ?, ?)
+            """,
+            [(prediction_id, "Registro incorporado al dataset de reentrenamiento") for prediction_id in ids],
+        )
+    return int(updated)
+
+
+def _load_prediction_records_with_features(db_path: Path) -> pd.DataFrame:
+    columns = [
+        "prediction_id",
+        "timestamp",
+        "consultor",
+        "model_name",
+        "model_version",
+        "model_file",
+        "features_json",
+        "prediction",
+        "actual_value",
+        "error",
+        "record_status",
+    ]
+
+    if _database_url():
+        init_database(db_path)
+        with _connect_postgres() as conn:
+            with conn.cursor() as cur:
+                cur.execute(
+                    """
+                    SELECT
+                        prediction_id,
+                        timestamp,
+                        consultor,
+                        model_name,
+                        model_version,
+                        model_file,
+                        features_json,
+                        prediction,
+                        actual_value,
+                        error,
+                        record_status
+                    FROM app_predictions
+                    ORDER BY created_at ASC
+                    """
+                )
+                rows = cur.fetchall()
+        base_df = pd.DataFrame(rows, columns=columns)
+    else:
+        init_database(db_path)
+        with sqlite3.connect(db_path) as conn:
+            base_df = pd.read_sql_query(
+                """
+                SELECT
+                    prediction_id,
+                    timestamp,
+                    consultor,
+                    model_name,
+                    model_version,
+                    model_file,
+                    features_json,
+                    prediction,
+                    actual_value,
+                    error,
+                    record_status
+                FROM app_predictions
+                ORDER BY created_at ASC
+                """,
+                conn,
+            )
+
+    if base_df.empty:
+        return pd.DataFrame()
+
+    features_df = base_df["features_json"].apply(_parse_features_json).apply(pd.Series)
+    return pd.concat([base_df.drop(columns=["features_json"]), features_df], axis=1)
+
+
 def _nullable_float(value) -> float | None:
     if value in ("", None):
         return None
@@ -405,6 +536,18 @@ def _nullable_float(value) -> float | None:
         return float(value)
     except (TypeError, ValueError):
         return None
+
+
+def _parse_features_json(value) -> dict:
+    if isinstance(value, dict):
+        return value
+    if value in ("", None):
+        return {}
+    try:
+        parsed = json.loads(value)
+    except (TypeError, ValueError, json.JSONDecodeError):
+        return {}
+    return parsed if isinstance(parsed, dict) else {}
 
 
 def _database_url() -> str:

@@ -269,6 +269,8 @@ El boton `Ejecutar pipeline de ingesta`:
 - se muestra bloqueado si no hay datos validos,
 - se activa cuando existe al menos un registro con valor real,
 - genera el dataset de reentrenamiento,
+- marca los registros procesados como `ingested_for_retraining`,
+- retira esos registros de la cola de nuevos datos para evitar reprocesarlos,
 - no cambia el modelo activo.
 
 La prediccion del modelo se conserva como referencia, pero no se usa como variable objetivo. Para reentrenar se usa el valor real observado como nueva `FloodProbability`.

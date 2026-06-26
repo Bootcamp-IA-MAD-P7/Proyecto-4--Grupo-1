@@ -350,10 +350,17 @@ def normalizar_nuevos_datos_df(new_data_df):
             new_data_df.at[idx, "prediction_id"] = f"new_legacy_{idx}_{timestamp}"
 
     new_data_df["actual_value"] = pd.to_numeric(new_data_df["actual_value"], errors="coerce")
-    new_data_df["record_status"] = np.where(
-        new_data_df["actual_value"].notna(),
-        "validated_for_retraining",
-        "pending_target",
+    current_status = new_data_df["record_status"].astype(str)
+    new_data_df["record_status"] = np.select(
+        [
+            current_status.eq("ingested_for_retraining"),
+            new_data_df["actual_value"].notna(),
+        ],
+        [
+            "ingested_for_retraining",
+            "validated_for_retraining",
+        ],
+        default="pending_target",
     )
     return new_data_df
 
@@ -748,6 +755,7 @@ def mostrar_guia_uso():
             3. Construye un dataset con la variable objetivo `FloodProbability`.
             4. Añade indicadores de feature engineering.
             5. Guarda `data/processed/retraining_dataset.csv`.
+            6. Marca esos registros como ingeridos para que salgan de la cola.
 
             Si todavia no hay valores reales confirmados, el boton aparece bloqueado. Eso significa que el pipeline
             existe, pero esta esperando datos validos para preparar el dataset.
@@ -1388,6 +1396,9 @@ def mostrar_base_datos():
 
 @st.cache_data(ttl=5)
 def cargar_nuevos_datos(path):
+    if usar_base_datos_persistente():
+        return database.load_pipeline_records(DATABASE_PATH)
+
     if not path.exists():
         return pd.DataFrame()
     try:
@@ -1395,7 +1406,38 @@ def cargar_nuevos_datos(path):
     except (pd.errors.ParserError, pd.errors.EmptyDataError):
         crear_backup_csv(path)
         return pd.DataFrame()
-    return normalizar_nuevos_datos_df(new_data_df)
+    new_data_df = normalizar_nuevos_datos_df(new_data_df)
+    return new_data_df[new_data_df["record_status"].astype(str) != "ingested_for_retraining"].copy()
+
+
+def marcar_registros_ingeridos(path, prediction_ids):
+    prediction_ids = [str(prediction_id) for prediction_id in prediction_ids if str(prediction_id).strip()]
+    if not prediction_ids:
+        return 0
+
+    if usar_base_datos_persistente():
+        updated = database.mark_predictions_ingested(DATABASE_PATH, prediction_ids)
+        cargar_nuevos_datos.clear()
+        cargar_feedback_monitorizacion.clear()
+        return updated
+
+    if not path.exists():
+        return 0
+
+    try:
+        new_data_df = pd.read_csv(path)
+    except (pd.errors.ParserError, pd.errors.EmptyDataError):
+        crear_backup_csv(path)
+        return 0
+
+    new_data_df = normalizar_nuevos_datos_df(new_data_df)
+    mask = new_data_df["prediction_id"].astype(str).isin(prediction_ids)
+    updated = int(mask.sum())
+    if updated:
+        new_data_df.loc[mask, "record_status"] = "ingested_for_retraining"
+        new_data_df.to_csv(path, index=False)
+        cargar_nuevos_datos.clear()
+    return updated
 
 
 def construir_dataset_reentrenamiento(new_data_df):
@@ -1406,6 +1448,15 @@ def guardar_dataset_reentrenamiento(retraining_df, path):
     if retraining_df.empty:
         return False
     path.parent.mkdir(parents=True, exist_ok=True)
+    if path.exists():
+        try:
+            existing_df = pd.read_csv(path)
+        except (pd.errors.ParserError, pd.errors.EmptyDataError):
+            crear_backup_csv(path)
+            existing_df = pd.DataFrame()
+        if not existing_df.empty:
+            retraining_df = pd.concat([existing_df, retraining_df], ignore_index=True)
+            retraining_df = retraining_df.drop_duplicates(ignore_index=True)
     retraining_df.to_csv(path, index=False)
     return True
 
@@ -1417,6 +1468,10 @@ def generar_explorador_visual_html(df):
 
 def mostrar_pipeline_reentrenamiento():
     st.header("Pipeline de ingestión para reentrenamiento")
+    pipeline_message = st.session_state.pop("pipeline_ingestion_message", None)
+    if pipeline_message:
+        st.success(pipeline_message)
+
     st.write(
         "Esta vista prepara los datos nuevos recogidos por la aplicación para futuros reentrenamientos. "
         "Solo los registros con valor real observado pueden usarse como datos supervisados."
@@ -1495,15 +1550,20 @@ def mostrar_pipeline_reentrenamiento():
             st.subheader("Accion del pipeline")
             if st.button("Ejecutar pipeline de ingesta", type="primary"):
                 if guardar_dataset_reentrenamiento(retraining_df, RETRAINING_DATASET_PATH):
-                    st.success("Pipeline de ingesta ejecutado correctamente.")
-                    st.write(
-                        f"La app ha preparado {len(retraining_df)} casos con valor real confirmado "
-                        "y ha creado el archivo que se usara como base para futuros reentrenamientos."
+                    prediction_ids = (
+                        registros_validados["prediction_id"].dropna().astype(str).tolist()
+                        if "prediction_id" in registros_validados.columns
+                        else []
                     )
-                    st.info(
-                        "Este boton no cambia el modelo actual. Solo ordena y guarda los datos nuevos "
-                        "que ya estan confirmados."
-                    )
+                    registros_marcados = marcar_registros_ingeridos(NEW_DATA_PATH, prediction_ids)
+                    if registros_marcados:
+                        st.session_state["pipeline_ingestion_message"] = (
+                            f"{registros_marcados} registros han salido de la cola de ingesta "
+                            "para no volver a procesarse en la siguiente ejecucion."
+                        )
+                    else:
+                        st.session_state["pipeline_ingestion_message"] = "Pipeline de ingesta ejecutado correctamente."
+                    st.rerun()
                 else:
                     st.error("No se pudo ejecutar el pipeline de ingesta.")
 
