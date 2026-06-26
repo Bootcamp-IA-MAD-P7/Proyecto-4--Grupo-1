@@ -68,6 +68,28 @@ Funciones principales:
 8. Calcula indicadores de feature engineering para explicar mejor el riesgo.
 9. Integra notebooks e inspeccion visual de datos dentro de la app.
 
+## Como interpretar los valores de entrada
+
+Los controles de la vista `Prediccion` no son porcentajes. Son puntuaciones discretas del dataset original. Cada factor usa el rango observado en entrenamiento.
+
+Ejemplos de rangos reales:
+
+| Variable | Minimo | Maximo |
+|---|---:|---:|
+| `MonsoonIntensity` | 0 | 16 |
+| `TopographyDrainage` | 0 | 18 |
+| `WetlandLoss` | 0 | 19 |
+| `PoliticalFactors` | 0 | 16 |
+
+Interpretacion general:
+
+```text
+valor bajo = menor presencia o intensidad del factor
+valor alto = mayor presencia o intensidad del factor
+```
+
+La app usa 20 variables predictoras, pero eso no significa que cada variable vaya de 0 a 20. La salida `FloodProbability` si se muestra como porcentaje porque representa la probabilidad estimada de inundacion.
+
 ## Demo recomendada
 
 Orden sugerido para presentar la aplicacion:
