@@ -8,7 +8,7 @@
 
 Proyecto grupal de Machine Learning orientado a resolver un problema de **regresion** con el dataset **Regression with a Flood Prediction Dataset** de Kaggle.
 
-La solucion no se limita a entrenar un modelo en notebooks: tambien incluye una aplicacion Streamlit para usar el modelo, guardar feedback, monitorizar resultados, persistir datos en SQLite y preparar nuevos registros para futuros reentrenamientos.
+La solucion no se limita a entrenar un modelo en notebooks: tambien incluye una aplicacion Streamlit para usar el modelo, guardar feedback, monitorizar resultados, persistir datos en SQLite o PostgreSQL y preparar nuevos registros para futuros reentrenamientos.
 
 ## Resumen ejecutivo
 
@@ -42,7 +42,7 @@ La aplicacion Streamlit convierte el trabajo tecnico del proyecto en una herrami
 3. Guarda cada prediccion como registro de seguimiento.
 4. Permite incorporar el valor real observado cuando se conozca.
 5. Calcula metricas de monitorizacion cuando hay valores reales.
-6. Guarda la informacion en CSV y tambien en SQLite.
+6. Guarda la informacion en CSV y tambien en base de datos.
 7. Prepara un dataset validado para futuros reentrenamientos.
 8. Muestra indicadores de feature engineering para explicar mejor el riesgo.
 9. Permite revisar notebooks y explorar datos desde la propia app.
@@ -156,9 +156,35 @@ docker run --rm -p 8501:8501 -v "$(pwd)/data:/app/data" flood-risk-app
 
 Esto permite conservar feedback, nuevos registros y la base SQLite fuera del ciclo de vida del contenedor.
 
+## Despliegue en Render
+
+La app esta preparada para desplegarse en Render como servicio Docker.
+
+Configuracion recomendada:
+
+| Campo | Valor |
+|---|---|
+| Service type | Web Service |
+| Runtime / Language | Docker |
+| Branch | `dev` |
+| Dockerfile path | `./Dockerfile` |
+| Health check path | `/_stcore/health` |
+
+El `Dockerfile` usa la variable `PORT` si Render la proporciona y, en local, mantiene `8501` como valor por defecto.
+
+Render construye la imagen desde el `Dockerfile` del repositorio y publica una URL web para la aplicacion.
+
+Para que los datos recogidos por la app no dependan del sistema de archivos del contenedor, se recomienda crear una base PostgreSQL en Render y anadir esta variable de entorno al Web Service:
+
+| Variable | Valor |
+|---|---|
+| `DATABASE_URL` | Internal Database URL de la base PostgreSQL de Render |
+
+Si `DATABASE_URL` existe, la aplicacion guarda predicciones y eventos en PostgreSQL. Si no existe, usa SQLite local como fallback para desarrollo.
+
 ## Ejecutar tests unitarios
 
-El proyecto incluye tests unitarios minimos para validar feature engineering, persistencia SQLite y construccion del dataset de reentrenamiento.
+El proyecto incluye tests unitarios minimos para validar feature engineering, persistencia local SQLite y construccion del dataset de reentrenamiento.
 
 Instalar dependencias de desarrollo:
 
@@ -203,7 +229,7 @@ El baseline se mantiene como modelo productivo porque los modelos optimizados ev
 | `Guia del proyecto` | Explica que hace la app, como se usa y como interpretar sus resultados |
 | `Prediccion` | Calcula la probabilidad estimada de inundacion |
 | `Monitorizacion` | Revisa feedback, metricas, valores reales y gestion de registros |
-| `Base de datos` | Comprueba el guardado estructurado de predicciones en SQLite |
+| `Base de datos` | Comprueba el guardado estructurado de predicciones en SQLite local o PostgreSQL en despliegue |
 | `Pipeline de reentrenamiento` | Prepara registros validados para futuros reentrenamientos |
 | `Informes tecnicos` | Muestra notebooks del proyecto con contexto |
 | `Datos` | Muestra muestra del dataset y explorador visual con PyGWalker |
@@ -245,9 +271,9 @@ Estos archivos son generados localmente y no se suben al repositorio.
 
 ## Base de datos
 
-La app guarda datos en una base SQLite local para demostrar persistencia estructurada sin depender de un servidor externo.
+La app guarda datos en una base estructurada. En desarrollo local usa SQLite para no depender de servicios externos. En despliegue puede usar PostgreSQL si existe la variable de entorno `DATABASE_URL`.
 
-Archivo generado:
+Archivo generado en modo local:
 
 ```text
 data/database/flood_app.sqlite
@@ -274,7 +300,16 @@ La vista `Base de datos` permite ver:
 - predicciones pendientes,
 - registros recientes.
 
-Tambien se conserva `src/db_setup.sql` como referencia de esquema para una posible migracion futura a PostgreSQL.
+En Render, la persistencia recomendada es PostgreSQL:
+
+1. Crear una base PostgreSQL en Render.
+2. Copiar su `Internal Database URL`.
+3. Anadirla en el Web Service como variable `DATABASE_URL`.
+4. Redeplegar la aplicacion.
+
+Con esa configuracion, los registros sobreviven a reinicios y nuevos despliegues del contenedor.
+
+Tambien se conserva `src/db_setup.sql` como referencia de esquema.
 
 ## Pipeline de ingesta para reentrenamiento
 
@@ -374,9 +409,10 @@ Si el CSV original de Kaggle no esta disponible en un entorno Docker o cloud, la
 
 | Requisito | Estado | Evidencia |
 |---|---|---|
-| Guardado en base de datos | Hecho | SQLite en `src/database.py` |
+| Guardado en base de datos | Hecho | SQLite local y PostgreSQL opcional con `DATABASE_URL` en `src/database.py` |
 | Version dockerizada del programa | Hecho | `Dockerfile`, `.dockerignore`, `requirements-docker.txt` |
 | Inclusion de tests unitarios | Hecho | `tests/` |
+| Despliegue | Hecho | Render Web Service con Docker |
 
 ## Distribucion de tareas del equipo
 
@@ -387,7 +423,7 @@ La distribucion se presenta por participante para que la defensa del proyecto te
 | Participante 1 | Analisis exploratorio y datos | Revision del dataset, analisis de nulos, distribuciones, correlaciones, visualizaciones iniciales y lectura de variables | `notebooks/01_EDA.ipynb`, `docs/dataset.md` |
 | Participante 2 | Modelado baseline y metricas | Separacion train/test, entrenamiento de modelos iniciales, seleccion del baseline, analisis de overfitting, residuos, prediccion vs real y guardado del modelo | `notebooks/02_modeling.ipynb` |
 | Participante 3 | Mejora y validacion del modelo | Modelos ensemble, comparacion con baseline, validacion cruzada, optimizacion de hiperparametros y explicacion de por que se mantiene el baseline | `notebooks/03_ensemble-techniques.ipynb`, `notebooks/04_hyperparameter_optimization.ipynb`, `notebooks/05_cross_validation.ipynb` |
-| Participante 4 | Productivizacion y cierre funcional | App Streamlit, feedback, monitorizacion, base de datos SQLite, pipeline de ingesta, feature engineering, explorador visual, documentacion final y preparacion de despliegue | `app/app.py`, `src/database.py`, `src/features.py`, `notebooks/06_retraining_pipeline.ipynb`, `README.md` |
+| Participante 4 | Productivizacion y cierre funcional | App Streamlit, feedback, monitorizacion, base de datos SQLite/PostgreSQL, pipeline de ingesta, feature engineering, explorador visual, documentacion final y preparacion de despliegue | `app/app.py`, `src/database.py`, `src/features.py`, `notebooks/06_retraining_pipeline.ipynb`, `README.md` |
 
 Trabajo transversal pendiente o coordinado por el equipo:
 
@@ -449,7 +485,7 @@ docs/internal/
 | Machine Learning | Scikit-learn, XGBoost, LightGBM, Optuna |
 | Productivizacion | Streamlit |
 | Contenerizacion | Docker |
-| Persistencia | SQLite |
+| Persistencia | SQLite local, PostgreSQL en despliegue |
 | Persistencia de modelo | Joblib |
 | Entorno de trabajo | Jupyter Notebook, Google Colab, VS Code |
 
