@@ -156,6 +156,24 @@ docker run --rm -p 8501:8501 -v "$(pwd)/data:/app/data" flood-risk-app
 
 Esto permite conservar feedback, nuevos registros y la base SQLite fuera del ciclo de vida del contenedor.
 
+## Despliegue en Render
+
+La app esta preparada para desplegarse en Render como servicio Docker.
+
+Configuracion recomendada:
+
+| Campo | Valor |
+|---|---|
+| Service type | Web Service |
+| Runtime / Language | Docker |
+| Branch | `dev` |
+| Dockerfile path | `./Dockerfile` |
+| Health check path | `/_stcore/health` |
+
+El `Dockerfile` usa la variable `PORT` si Render la proporciona y, en local, mantiene `8501` como valor por defecto.
+
+Render construye la imagen desde el `Dockerfile` del repositorio y publica una URL web para la aplicacion. Los datos generados dentro del contenedor pueden no persistir entre reinicios si no se configura almacenamiento persistente externo.
+
 ## Ejecutar tests unitarios
 
 El proyecto incluye tests unitarios minimos para validar feature engineering, persistencia SQLite y construccion del dataset de reentrenamiento.
@@ -377,6 +395,7 @@ Si el CSV original de Kaggle no esta disponible en un entorno Docker o cloud, la
 | Guardado en base de datos | Hecho | SQLite en `src/database.py` |
 | Version dockerizada del programa | Hecho | `Dockerfile`, `.dockerignore`, `requirements-docker.txt` |
 | Inclusion de tests unitarios | Hecho | `tests/` |
+| Despliegue | Preparado | Render Web Service con Docker |
 
 ## Distribucion de tareas del equipo
 
