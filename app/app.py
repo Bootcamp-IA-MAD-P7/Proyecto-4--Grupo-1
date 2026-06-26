@@ -1461,6 +1461,28 @@ def guardar_dataset_reentrenamiento(retraining_df, path):
     return True
 
 
+def mostrar_descarga_dataset_procesado():
+    if not RETRAINING_DATASET_PATH.exists():
+        return
+    try:
+        processed_df = pd.read_csv(RETRAINING_DATASET_PATH)
+    except (pd.errors.ParserError, pd.errors.EmptyDataError):
+        return
+    if processed_df.empty:
+        return
+
+    st.subheader("Ultimo dataset preparado")
+    st.caption(
+        f"Dataset acumulado disponible con {len(processed_df)} registros preparados para reentrenamiento."
+    )
+    st.download_button(
+        "Descargar ultimo dataset validado",
+        data=processed_df.to_csv(index=False).encode("utf-8"),
+        file_name="retraining_dataset.csv",
+        mime="text/csv",
+    )
+
+
 @st.cache_data(show_spinner=False)
 def generar_explorador_visual_html(df):
     return pyg.to_html(df, appearance="dark", theme_key="g2", default_tab="vis")
@@ -1501,8 +1523,9 @@ def mostrar_pipeline_reentrenamiento():
     new_data_df = cargar_nuevos_datos(NEW_DATA_PATH)
     if new_data_df.empty:
         st.warning(
-            "Todavía no hay registros nuevos. Genera predicciones desde la vista Predicción para alimentar el pipeline."
+            "No hay registros pendientes de ingesta. Genera predicciones nuevas o revisa el ultimo dataset preparado."
         )
+        mostrar_descarga_dataset_procesado()
         st.subheader("Accion del pipeline")
         st.button("Ejecutar pipeline de ingesta", type="primary", disabled=True)
         st.caption(
