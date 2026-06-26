@@ -116,6 +116,62 @@ La aplicacion se abre normalmente en:
 http://localhost:8501
 ```
 
+## Ejecutar con Docker
+
+El proyecto incluye una version dockerizada de la aplicacion Streamlit.
+
+Archivos principales:
+
+```text
+Dockerfile
+.dockerignore
+requirements-docker.txt
+```
+
+Construir la imagen desde la raiz del proyecto:
+
+```bash
+docker build -t flood-risk-app .
+```
+
+Ejecutar el contenedor:
+
+```bash
+docker run --rm -p 8501:8501 flood-risk-app
+```
+
+Abrir la aplicacion:
+
+```text
+http://localhost:8501
+```
+
+La imagen usa `python:3.11-slim`, instala las dependencias necesarias para ejecutar la app y expone el puerto `8501`.
+
+Para ejecucion local con datos persistentes, se puede montar la carpeta `data/` como volumen:
+
+```bash
+docker run --rm -p 8501:8501 -v "$(pwd)/data:/app/data" flood-risk-app
+```
+
+Esto permite conservar feedback, nuevos registros y la base SQLite fuera del ciclo de vida del contenedor.
+
+## Ejecutar tests unitarios
+
+El proyecto incluye tests unitarios minimos para validar feature engineering, persistencia SQLite y construccion del dataset de reentrenamiento.
+
+Instalar dependencias de desarrollo:
+
+```bash
+pip install -r requirements-dev.txt
+```
+
+Ejecutar tests:
+
+```bash
+python -m pytest
+```
+
 ## Modelo productivo
 
 La app espera el modelo entrenado en:
@@ -279,6 +335,8 @@ La vista `Datos` incluye:
 
 PyGWalker permite cruzar columnas, crear graficos rapidos y reforzar el EDA desde la app sin abrir notebooks ni escribir codigo.
 
+Si el CSV original de Kaggle no esta disponible en un entorno Docker o cloud, la app muestra una muestra de demostracion con la misma estructura de columnas. Esto evita que la vista falle durante una demo o despliegue, sin sustituir al dataset real cuando este disponible localmente.
+
 ## Notebooks
 
 | Notebook | Contenido | Estado |
@@ -317,6 +375,8 @@ PyGWalker permite cruzar columnas, crear graficos rapidos y reforzar el EDA desd
 | Requisito | Estado | Evidencia |
 |---|---|---|
 | Guardado en base de datos | Hecho | SQLite en `src/database.py` |
+| Version dockerizada del programa | Hecho | `Dockerfile`, `.dockerignore`, `requirements-docker.txt` |
+| Inclusion de tests unitarios | Hecho | `tests/` |
 
 ## Distribucion de tareas del equipo
 
@@ -388,6 +448,7 @@ docs/internal/
 | Visualizacion | Matplotlib, Seaborn, PyGWalker |
 | Machine Learning | Scikit-learn, XGBoost, LightGBM, Optuna |
 | Productivizacion | Streamlit |
+| Contenerizacion | Docker |
 | Persistencia | SQLite |
 | Persistencia de modelo | Joblib |
 | Entorno de trabajo | Jupyter Notebook, Google Colab, VS Code |
@@ -411,9 +472,12 @@ Comandos usados para revisar el estado antes de merge:
 python -m py_compile app\app.py app\paths.py src\features.py src\database.py src\db_insert.py
 python -m pip check
 git diff --check
+python -m pytest
+docker build -t flood-risk-app .
+docker run --rm -p 8501:8501 flood-risk-app
 ```
 
-Tambien se comprobo la carga local de Streamlit en `http://localhost:8501`.
+Tambien se comprobo la carga local de Streamlit en `http://localhost:8501`, tanto en ejecucion local como dentro del contenedor Docker.
 
 ## Flujo de Git
 

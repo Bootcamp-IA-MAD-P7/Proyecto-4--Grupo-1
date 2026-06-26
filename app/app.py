@@ -28,6 +28,7 @@ except ModuleNotFoundError:
 
 from src import database
 from src.features import add_engineered_features, summarize_engineered_features
+from src.pipeline import build_retraining_dataset
 
 DATA_PATH = get_data_path("train.csv")
 
@@ -210,6 +211,17 @@ def cargar_rangos_variables(path):
         }
         for feature in FEATURE_COLUMNS
     }
+
+
+def crear_muestra_demo_dataset(filas):
+    rows = []
+    for idx in range(filas):
+        row = {"id": idx}
+        for feature_idx, feature in enumerate(FEATURE_COLUMNS):
+            row[feature] = int((idx + feature_idx) % 10)
+        row["FloodProbability"] = round(0.25 + ((idx % 10) * 0.05), 3)
+        rows.append(row)
+    return pd.DataFrame(rows)
 
 
 def resolver_modelo():
@@ -1300,21 +1312,7 @@ def cargar_nuevos_datos(path):
 
 
 def construir_dataset_reentrenamiento(new_data_df):
-    if new_data_df.empty:
-        return pd.DataFrame()
-
-    required_cols = [*FEATURE_COLUMNS, "actual_value"]
-    missing_cols = [col for col in required_cols if col not in new_data_df.columns]
-    if missing_cols:
-        return pd.DataFrame()
-
-    validated_df = new_data_df.dropna(subset=["actual_value"]).copy()
-    if validated_df.empty:
-        return pd.DataFrame()
-
-    retraining_df = add_engineered_features(validated_df[FEATURE_COLUMNS].copy())
-    retraining_df["FloodProbability"] = validated_df["actual_value"].astype(float)
-    return retraining_df
+    return build_retraining_dataset(new_data_df, FEATURE_COLUMNS)
 
 
 def guardar_dataset_reentrenamiento(retraining_df, path):
@@ -1464,10 +1462,14 @@ def mostrar_datos(num_rows):
     )
 
     if not DATA_PATH.exists():
-        st.error(f"No se encontró el archivo de datos en: {DATA_PATH}")
-        return
-
-    df_preview = cargar_preview(DATA_PATH, num_rows)
+        st.warning(
+            "No se encontro el CSV original del dataset en este entorno. "
+            "Se muestra una muestra de demostracion con la misma estructura para mantener activa la vista."
+        )
+        st.caption(f"Ruta esperada del dataset real: {DATA_PATH}")
+        df_preview = crear_muestra_demo_dataset(num_rows)
+    else:
+        df_preview = cargar_preview(DATA_PATH, num_rows)
     tab1, tab2 = st.tabs(["Tabla de datos", "Explorador visual"])
 
     with tab1:
