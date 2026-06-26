@@ -605,7 +605,7 @@ def mostrar_guia_uso():
             - **Guarda cada predicción** para poder revisarla después.
             - **Permite añadir el valor real observado** cuando se conozca.
             - **Compara predicción y realidad** para monitorizar si el modelo funciona bien.
-            - **Guarda los datos recogidos en SQLite** para demostrar persistencia estructurada.
+            - **Guarda los datos recogidos en base de datos**: SQLite en local y PostgreSQL persistente en Render.
             - **Prepara un dataset de reentrenamiento** con los casos que ya tienen valor real.
             """
         )
@@ -614,6 +614,14 @@ def mostrar_guia_uso():
         st.write(
             "Es un problema de regresión porque el modelo no clasifica en categorías cerradas, sino que predice "
             "un número continuo: `FloodProbability`. La app lo muestra como porcentaje para que sea más fácil de leer."
+        )
+
+        st.subheader("Como leer los valores de entrada")
+        st.write(
+            "Los controles de Prediccion no son porcentajes. Son puntuaciones discretas del dataset: "
+            "un valor bajo indica menor presencia del factor y un valor alto indica mayor intensidad o presencia. "
+            "Cada variable usa su rango real observado en entrenamiento; por ejemplo, algunas llegan a 16, otras a 18 o 19. "
+            "La probabilidad final de inundacion si se muestra como porcentaje."
         )
 
     with tab_modelo:
@@ -670,12 +678,12 @@ def mostrar_guia_uso():
                 {
                     "Vista": "Monitorización",
                     "Qué haces": "Añades valores reales cuando estén disponibles.",
-                    "Qué obtienes": "Errores y métricas acumuladas del modelo.",
+                    "Qué obtienes": "Errores, métricas acumuladas y gráficas; en Render se cargan desde PostgreSQL.",
                 },
                 {
                     "Vista": "Base de datos",
                     "Qué haces": "Compruebas que las predicciones se han guardado.",
-                    "Qué obtienes": "Conteo de registros y últimos datos almacenados.",
+                    "Qué obtienes": "Motor activo, conteo de registros y últimos datos almacenados.",
                 },
                 {
                     "Vista": "Pipeline de reentrenamiento",
@@ -803,7 +811,7 @@ def mostrar_guia_uso():
                 {
                     "Paso": "6. Comprobar persistencia",
                     "Qué haces": "Entras en Base de datos.",
-                    "Cómo interpretarlo": "Ves si la predicción quedó guardada en SQLite y cuántos registros hay.",
+                    "Cómo interpretarlo": "Ves si la predicción quedó guardada. En Render debe aparecer PostgreSQL persistente.",
                 },
                 {
                     "Paso": "7. Preparar reentrenamiento",
