@@ -161,9 +161,10 @@ def aplicar_estilo_visual():
 def guardar_registro_base_datos(fila):
     try:
         database.save_prediction_record(DATABASE_PATH, fila, FEATURE_COLUMNS)
-        return True, "Registro guardado tambien en la base de datos local."
+        backend = database.get_database_backend(DATABASE_PATH)
+        return True, f"Registro guardado tambien en la base de datos ({backend['engine']})."
     except Exception as exc:
-        return False, f"No se pudo guardar en la base de datos local: {exc}"
+        return False, f"No se pudo guardar en la base de datos: {exc}"
 
 
 def mostrar_cabecera(nombre_usuario):
@@ -1260,24 +1261,25 @@ def mostrar_monitorizacion():
 def mostrar_base_datos():
     st.header("Base de datos de la aplicacion")
     st.write(
-        "Esta vista comprueba que los datos recogidos por la app tambien se guardan en una base de datos local. "
-        "Los CSV se mantienen como respaldo, pero SQLite permite demostrar persistencia estructurada."
+        "Esta vista comprueba que los datos recogidos por la app tambien se guardan en una base de datos estructurada. "
+        "En local usa SQLite; en despliegue puede usar PostgreSQL persistente si existe DATABASE_URL."
     )
 
     try:
         summary = database.get_database_summary(DATABASE_PATH)
     except Exception as exc:
-        st.error(f"No se pudo abrir la base de datos local: {exc}")
+        st.error(f"No se pudo abrir la base de datos: {exc}")
         return
 
     col_estado, col_total, col_validados, col_pendientes = st.columns(4)
-    col_estado.metric("Estado", "Activa" if summary["exists"] else "Pendiente")
+    estado_bd = "Persistente" if summary.get("persistent") else "Local"
+    col_estado.metric("Base de datos", f"{summary.get('engine', 'SQLite')} - {estado_bd}")
     col_total.metric("Predicciones en BD", summary["total_predictions"])
     col_validados.metric("Con valor real", summary["validated_predictions"])
     col_pendientes.metric("Pendientes", summary["pending_predictions"])
 
     st.info(
-        "Cada vez que se calcula una prediccion, la app guarda en SQLite el identificador, fecha, consultor, "
+        "Cada vez que se calcula una prediccion, la app guarda el identificador, fecha, consultor, "
         "modelo usado, valores introducidos, prediccion, valor real si existe y estado del registro."
     )
 
@@ -1292,7 +1294,7 @@ def mostrar_base_datos():
         st.dataframe(recent_df.fillna(""), width="stretch", hide_index=True)
 
     with st.expander("Ubicacion y esquema"):
-        st.code(str(DATABASE_PATH), language="text")
+        st.code(str(summary["path"]), language="text")
         st.write(
             "Tabla principal: `app_predictions`. Tabla auxiliar: `app_events`, usada para registrar guardados, "
             "actualizaciones y borrados."
