@@ -2,6 +2,7 @@ from datetime import datetime
 from pathlib import Path
 import base64
 import csv
+import html
 import shutil
 import sys
 
@@ -165,6 +166,18 @@ def mostrar_tarjeta(titulo, texto, color="#F8FAFC", borde="#CBD5E1"):
         ">
             <strong style="color:#0F172A;">{titulo}</strong>
             <p style="margin:0.35rem 0 0 0;color:#1E293B;">{texto}</p>
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
+
+
+def mostrar_ruta_interna(etiqueta, ruta):
+    st.markdown(
+        f"""
+        <div class="internal-path">
+            <span>{html.escape(str(etiqueta))}</span>
+            <strong>{html.escape(str(ruta))}</strong>
         </div>
         """,
         unsafe_allow_html=True,
@@ -756,6 +769,7 @@ def mostrar_guia_uso():
             4. Añade indicadores de feature engineering.
             5. Guarda `data/processed/retraining_dataset.csv`.
             6. Marca esos registros como ingeridos para que salgan de la cola.
+            7. Si el dataset ya existe, muestra la descarga como `Descargar dataset procesado`.
 
             Si todavia no hay valores reales confirmados, el boton aparece bloqueado. Eso significa que el pipeline
             existe, pero esta esperando datos validos para preparar el dataset.
@@ -769,6 +783,11 @@ def mostrar_guia_uso():
             "Feature engineering significa crear variables nuevas a partir de las originales para ayudar a interpretar o mejorar "
             "el modelo. Aquí no pedimos al usuario más datos: agrupamos los factores existentes en indicadores compuestos."
         )
+        st.info(
+            "En Render, el pipeline usa PostgreSQL como fuente persistente. Las rutas internas que ves en la app "
+            "son referencias tecnicas del entorno y no hace falta copiarlas para usar la aplicacion."
+        )
+
         features_df = pd.DataFrame(
             [
                 {"Indicador": "risk_score_sum", "Qué resume": "Suma total de factores de riesgo."},
@@ -1348,7 +1367,9 @@ def mostrar_monitorizacion():
     st.dataframe(feedback_display.fillna(""), width="stretch", hide_index=True)
 
     with st.expander("Ubicación del archivo de feedback"):
-        st.code(str(FEEDBACK_PATH), language="text")
+        mostrar_ruta_interna("Feedback local", FEEDBACK_PATH)
+        if usar_base_datos_persistente():
+            st.caption("En Render, la monitorizacion se carga desde PostgreSQL persistente.")
 
 
 def mostrar_base_datos():
@@ -1387,7 +1408,7 @@ def mostrar_base_datos():
         st.dataframe(recent_df.fillna(""), width="stretch", hide_index=True)
 
     with st.expander("Ubicacion y esquema"):
-        st.code(str(summary["path"]), language="text")
+        mostrar_ruta_interna("Origen activo", summary["path"])
         st.write(
             "Tabla principal: `app_predictions`. Tabla auxiliar: `app_events`, usada para registrar guardados, "
             "actualizaciones y borrados."
@@ -1471,12 +1492,12 @@ def mostrar_descarga_dataset_procesado():
     if processed_df.empty:
         return
 
-    st.subheader("Ultimo dataset preparado")
+    st.subheader("Dataset procesado disponible")
     st.caption(
-        f"Dataset acumulado disponible con {len(processed_df)} registros preparados para reentrenamiento."
+        f"Archivo acumulado con {len(processed_df)} registros ya preparados por el pipeline."
     )
     st.download_button(
-        "Descargar ultimo dataset validado",
+        "Descargar dataset procesado",
         data=processed_df.to_csv(index=False).encode("utf-8"),
         file_name="retraining_dataset.csv",
         mime="text/csv",
@@ -1523,14 +1544,14 @@ def mostrar_pipeline_reentrenamiento():
     new_data_df = cargar_nuevos_datos(NEW_DATA_PATH)
     if new_data_df.empty:
         st.warning(
-            "No hay registros pendientes de ingesta. Genera predicciones nuevas o revisa el ultimo dataset preparado."
+            "No hay registros pendientes de ingesta. Genera predicciones nuevas o revisa el dataset procesado si ya existe."
         )
-        mostrar_descarga_dataset_procesado()
         st.subheader("Accion del pipeline")
         st.button("Ejecutar pipeline de ingesta", type="primary", disabled=True)
         st.caption(
             "El boton se activara cuando exista al menos una prediccion guardada con valor real observado."
         )
+        mostrar_descarga_dataset_procesado()
         return
 
     total_registros = len(new_data_df)
@@ -1620,8 +1641,12 @@ def mostrar_pipeline_reentrenamiento():
     st.dataframe(display_df.fillna(""), width="stretch", hide_index=True)
 
     with st.expander("Archivos del pipeline"):
-        st.code(str(NEW_DATA_PATH), language="text")
-        st.code(str(RETRAINING_DATASET_PATH), language="text")
+        mostrar_ruta_interna("Cola local de nuevos registros", NEW_DATA_PATH)
+        mostrar_ruta_interna("Dataset procesado", RETRAINING_DATASET_PATH)
+        if usar_base_datos_persistente():
+            st.caption("En Render, la cola del pipeline se lee desde PostgreSQL y el dataset procesado se genera en el contenedor.")
+
+    mostrar_descarga_dataset_procesado()
 
 
 def mostrar_datos(num_rows):
