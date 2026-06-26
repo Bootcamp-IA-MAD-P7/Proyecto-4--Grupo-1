@@ -350,10 +350,17 @@ def normalizar_nuevos_datos_df(new_data_df):
             new_data_df.at[idx, "prediction_id"] = f"new_legacy_{idx}_{timestamp}"
 
     new_data_df["actual_value"] = pd.to_numeric(new_data_df["actual_value"], errors="coerce")
-    new_data_df["record_status"] = np.where(
-        new_data_df["actual_value"].notna(),
-        "validated_for_retraining",
-        "pending_target",
+    current_status = new_data_df["record_status"].astype(str)
+    new_data_df["record_status"] = np.select(
+        [
+            current_status.eq("ingested_for_retraining"),
+            new_data_df["actual_value"].notna(),
+        ],
+        [
+            "ingested_for_retraining",
+            "validated_for_retraining",
+        ],
+        default="pending_target",
     )
     return new_data_df
 
@@ -605,7 +612,7 @@ def mostrar_guia_uso():
             - **Guarda cada predicción** para poder revisarla después.
             - **Permite añadir el valor real observado** cuando se conozca.
             - **Compara predicción y realidad** para monitorizar si el modelo funciona bien.
-            - **Guarda los datos recogidos en SQLite** para demostrar persistencia estructurada.
+            - **Guarda los datos recogidos en base de datos**: SQLite en local y PostgreSQL persistente en Render.
             - **Prepara un dataset de reentrenamiento** con los casos que ya tienen valor real.
             """
         )
@@ -614,6 +621,14 @@ def mostrar_guia_uso():
         st.write(
             "Es un problema de regresión porque el modelo no clasifica en categorías cerradas, sino que predice "
             "un número continuo: `FloodProbability`. La app lo muestra como porcentaje para que sea más fácil de leer."
+        )
+
+        st.subheader("Como leer los valores de entrada")
+        st.write(
+            "Los controles de Prediccion no son porcentajes. Son puntuaciones discretas del dataset: "
+            "un valor bajo indica menor presencia del factor y un valor alto indica mayor intensidad o presencia. "
+            "Cada variable usa su rango real observado en entrenamiento; por ejemplo, algunas llegan a 16, otras a 18 o 19. "
+            "La probabilidad final de inundacion si se muestra como porcentaje."
         )
 
     with tab_modelo:
@@ -670,12 +685,12 @@ def mostrar_guia_uso():
                 {
                     "Vista": "Monitorización",
                     "Qué haces": "Añades valores reales cuando estén disponibles.",
-                    "Qué obtienes": "Errores y métricas acumuladas del modelo.",
+                    "Qué obtienes": "Errores, métricas acumuladas y gráficas; en Render se cargan desde PostgreSQL.",
                 },
                 {
                     "Vista": "Base de datos",
                     "Qué haces": "Compruebas que las predicciones se han guardado.",
-                    "Qué obtienes": "Conteo de registros y últimos datos almacenados.",
+                    "Qué obtienes": "Motor activo, conteo de registros y últimos datos almacenados.",
                 },
                 {
                     "Vista": "Pipeline de reentrenamiento",
@@ -740,6 +755,7 @@ def mostrar_guia_uso():
             3. Construye un dataset con la variable objetivo `FloodProbability`.
             4. Añade indicadores de feature engineering.
             5. Guarda `data/processed/retraining_dataset.csv`.
+            6. Marca esos registros como ingeridos para que salgan de la cola.
 
             Si todavia no hay valores reales confirmados, el boton aparece bloqueado. Eso significa que el pipeline
             existe, pero esta esperando datos validos para preparar el dataset.
@@ -803,7 +819,7 @@ def mostrar_guia_uso():
                 {
                     "Paso": "6. Comprobar persistencia",
                     "Qué haces": "Entras en Base de datos.",
-                    "Cómo interpretarlo": "Ves si la predicción quedó guardada en SQLite y cuántos registros hay.",
+                    "Cómo interpretarlo": "Ves si la predicción quedó guardada. En Render debe aparecer PostgreSQL persistente.",
                 },
                 {
                     "Paso": "7. Preparar reentrenamiento",
@@ -1048,6 +1064,17 @@ def cargar_feedback(path):
     return normalizar_feedback_df(feedback_df)
 
 
+def usar_base_datos_persistente():
+    return bool(database.get_database_backend(DATABASE_PATH).get("persistent"))
+
+
+@st.cache_data(ttl=5)
+def cargar_feedback_monitorizacion(path):
+    if usar_base_datos_persistente():
+        return database.load_monitoring_records(DATABASE_PATH)
+    return cargar_feedback(path)
+
+
 def mostrar_monitorizacion():
     st.header("Monitorización del modelo")
     st.write(
@@ -1060,9 +1087,10 @@ def mostrar_monitorizacion():
         "cuando alguna predicción tiene valor real guardado."
     )
 
-    feedback_df = cargar_feedback(FEEDBACK_PATH)
+    usa_bd_persistente = usar_base_datos_persistente()
+    feedback_df = cargar_feedback_monitorizacion(FEEDBACK_PATH)
     if feedback_df.empty:
-        backups = sorted(FEEDBACK_PATH.parent.glob(f"{FEEDBACK_PATH.stem}_backup_*.csv"))
+        backups = [] if usa_bd_persistente else sorted(FEEDBACK_PATH.parent.glob(f"{FEEDBACK_PATH.stem}_backup_*.csv"))
         if backups:
             st.warning(
                 "Se detectó un archivo de feedback anterior con formato incompatible o corrupto. "
@@ -1073,6 +1101,9 @@ def mostrar_monitorizacion():
             "`Predicción` para empezar a generar feedback."
         )
         return
+
+    if usa_bd_persistente:
+        st.caption("Monitorizacion cargada desde PostgreSQL persistente.")
 
     total_predicciones = len(feedback_df)
     feedback_df["actual_value"] = pd.to_numeric(feedback_df.get("actual_value"), errors="coerce")
@@ -1123,12 +1154,28 @@ def mostrar_monitorizacion():
             guardar_actualizacion = st.form_submit_button("Guardar valor real en esta predicción")
 
         if guardar_actualizacion:
-            ok, mensaje = actualizar_valor_real_feedback(
-                FEEDBACK_PATH,
-                prediction_id_seleccionado,
-                valor_real_pendiente_pct / 100,
-                NEW_DATA_PATH,
-            )
+            if usa_bd_persistente:
+                fila = pendientes_df[
+                    pendientes_df["prediction_id"].astype(str) == str(prediction_id_seleccionado)
+                ].iloc[0]
+                try:
+                    database.update_actual_value(
+                        DATABASE_PATH,
+                        str(prediction_id_seleccionado),
+                        valor_real_pendiente_pct / 100,
+                        float(fila.get("prediction")),
+                    )
+                    cargar_feedback_monitorizacion.clear()
+                    ok, mensaje = True, "Valor real guardado en PostgreSQL. Las metricas se han actualizado."
+                except Exception as exc:
+                    ok, mensaje = False, f"No se pudo actualizar PostgreSQL: {exc}"
+            else:
+                ok, mensaje = actualizar_valor_real_feedback(
+                    FEEDBACK_PATH,
+                    prediction_id_seleccionado,
+                    valor_real_pendiente_pct / 100,
+                    NEW_DATA_PATH,
+                )
             if ok:
                 st.success(mensaje)
                 st.rerun()
@@ -1188,12 +1235,25 @@ def mostrar_monitorizacion():
             guardar_edicion = st.form_submit_button("Actualizar valor real")
 
         if guardar_edicion:
-            ok, mensaje = actualizar_valor_real_feedback(
-                FEEDBACK_PATH,
-                registro_id,
-                nuevo_valor_real_pct / 100,
-                NEW_DATA_PATH,
-            )
+            if usa_bd_persistente:
+                try:
+                    database.update_actual_value(
+                        DATABASE_PATH,
+                        str(registro_id),
+                        nuevo_valor_real_pct / 100,
+                        float(registro.get("prediction")),
+                    )
+                    cargar_feedback_monitorizacion.clear()
+                    ok, mensaje = True, "Valor real actualizado en PostgreSQL."
+                except Exception as exc:
+                    ok, mensaje = False, f"No se pudo actualizar PostgreSQL: {exc}"
+            else:
+                ok, mensaje = actualizar_valor_real_feedback(
+                    FEEDBACK_PATH,
+                    registro_id,
+                    nuevo_valor_real_pct / 100,
+                    NEW_DATA_PATH,
+                )
             if ok:
                 st.success(mensaje)
                 st.rerun()
@@ -1215,7 +1275,15 @@ def mostrar_monitorizacion():
             if confirmacion_eliminar != "ELIMINAR":
                 st.error("No se eliminó nada. Debes escribir ELIMINAR para confirmar.")
             else:
-                ok, mensaje = eliminar_prediccion_registrada(FEEDBACK_PATH, NEW_DATA_PATH, registro_id)
+                if usa_bd_persistente:
+                    try:
+                        database.delete_prediction_record(DATABASE_PATH, str(registro_id))
+                        cargar_feedback_monitorizacion.clear()
+                        ok, mensaje = True, "Prediccion eliminada de PostgreSQL."
+                    except Exception as exc:
+                        ok, mensaje = False, f"No se pudo eliminar de PostgreSQL: {exc}"
+                else:
+                    ok, mensaje = eliminar_prediccion_registrada(FEEDBACK_PATH, NEW_DATA_PATH, registro_id)
                 if ok:
                     st.success(mensaje)
                     st.rerun()
@@ -1328,6 +1396,9 @@ def mostrar_base_datos():
 
 @st.cache_data(ttl=5)
 def cargar_nuevos_datos(path):
+    if usar_base_datos_persistente():
+        return database.load_pipeline_records(DATABASE_PATH)
+
     if not path.exists():
         return pd.DataFrame()
     try:
@@ -1335,7 +1406,38 @@ def cargar_nuevos_datos(path):
     except (pd.errors.ParserError, pd.errors.EmptyDataError):
         crear_backup_csv(path)
         return pd.DataFrame()
-    return normalizar_nuevos_datos_df(new_data_df)
+    new_data_df = normalizar_nuevos_datos_df(new_data_df)
+    return new_data_df[new_data_df["record_status"].astype(str) != "ingested_for_retraining"].copy()
+
+
+def marcar_registros_ingeridos(path, prediction_ids):
+    prediction_ids = [str(prediction_id) for prediction_id in prediction_ids if str(prediction_id).strip()]
+    if not prediction_ids:
+        return 0
+
+    if usar_base_datos_persistente():
+        updated = database.mark_predictions_ingested(DATABASE_PATH, prediction_ids)
+        cargar_nuevos_datos.clear()
+        cargar_feedback_monitorizacion.clear()
+        return updated
+
+    if not path.exists():
+        return 0
+
+    try:
+        new_data_df = pd.read_csv(path)
+    except (pd.errors.ParserError, pd.errors.EmptyDataError):
+        crear_backup_csv(path)
+        return 0
+
+    new_data_df = normalizar_nuevos_datos_df(new_data_df)
+    mask = new_data_df["prediction_id"].astype(str).isin(prediction_ids)
+    updated = int(mask.sum())
+    if updated:
+        new_data_df.loc[mask, "record_status"] = "ingested_for_retraining"
+        new_data_df.to_csv(path, index=False)
+        cargar_nuevos_datos.clear()
+    return updated
 
 
 def construir_dataset_reentrenamiento(new_data_df):
@@ -1346,6 +1448,15 @@ def guardar_dataset_reentrenamiento(retraining_df, path):
     if retraining_df.empty:
         return False
     path.parent.mkdir(parents=True, exist_ok=True)
+    if path.exists():
+        try:
+            existing_df = pd.read_csv(path)
+        except (pd.errors.ParserError, pd.errors.EmptyDataError):
+            crear_backup_csv(path)
+            existing_df = pd.DataFrame()
+        if not existing_df.empty:
+            retraining_df = pd.concat([existing_df, retraining_df], ignore_index=True)
+            retraining_df = retraining_df.drop_duplicates(ignore_index=True)
     retraining_df.to_csv(path, index=False)
     return True
 
@@ -1357,6 +1468,10 @@ def generar_explorador_visual_html(df):
 
 def mostrar_pipeline_reentrenamiento():
     st.header("Pipeline de ingestión para reentrenamiento")
+    pipeline_message = st.session_state.pop("pipeline_ingestion_message", None)
+    if pipeline_message:
+        st.success(pipeline_message)
+
     st.write(
         "Esta vista prepara los datos nuevos recogidos por la aplicación para futuros reentrenamientos. "
         "Solo los registros con valor real observado pueden usarse como datos supervisados."
@@ -1435,15 +1550,20 @@ def mostrar_pipeline_reentrenamiento():
             st.subheader("Accion del pipeline")
             if st.button("Ejecutar pipeline de ingesta", type="primary"):
                 if guardar_dataset_reentrenamiento(retraining_df, RETRAINING_DATASET_PATH):
-                    st.success("Pipeline de ingesta ejecutado correctamente.")
-                    st.write(
-                        f"La app ha preparado {len(retraining_df)} casos con valor real confirmado "
-                        "y ha creado el archivo que se usara como base para futuros reentrenamientos."
+                    prediction_ids = (
+                        registros_validados["prediction_id"].dropna().astype(str).tolist()
+                        if "prediction_id" in registros_validados.columns
+                        else []
                     )
-                    st.info(
-                        "Este boton no cambia el modelo actual. Solo ordena y guarda los datos nuevos "
-                        "que ya estan confirmados."
-                    )
+                    registros_marcados = marcar_registros_ingeridos(NEW_DATA_PATH, prediction_ids)
+                    if registros_marcados:
+                        st.session_state["pipeline_ingestion_message"] = (
+                            f"{registros_marcados} registros han salido de la cola de ingesta "
+                            "para no volver a procesarse en la siguiente ejecucion."
+                        )
+                    else:
+                        st.session_state["pipeline_ingestion_message"] = "Pipeline de ingesta ejecutado correctamente."
+                    st.rerun()
                 else:
                     st.error("No se pudo ejecutar el pipeline de ingesta.")
 

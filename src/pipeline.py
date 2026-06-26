@@ -15,6 +15,11 @@ def build_retraining_dataset(new_data_df: pd.DataFrame, feature_columns: list[st
         return pd.DataFrame()
 
     validated_df = new_data_df.dropna(subset=["actual_value"]).copy()
+    if "record_status" in validated_df.columns:
+        validated_df = validated_df[
+            validated_df["record_status"].astype(str) != "ingested_for_retraining"
+        ].copy()
+
     if validated_df.empty:
         return pd.DataFrame()
 

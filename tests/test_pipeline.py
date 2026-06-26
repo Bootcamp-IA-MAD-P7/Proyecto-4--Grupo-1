@@ -29,3 +29,21 @@ def test_build_retraining_dataset_returns_empty_when_target_is_missing():
     result = build_retraining_dataset(df, BASE_FEATURES)
 
     assert result.empty
+
+
+def test_build_retraining_dataset_skips_already_ingested_rows():
+    validated = {feature: 5 for feature in BASE_FEATURES}
+    df = pd.DataFrame(
+        [
+            {
+                **validated,
+                "prediction_id": "already_ingested",
+                "actual_value": 0.7,
+                "record_status": "ingested_for_retraining",
+            }
+        ]
+    )
+
+    result = build_retraining_dataset(df, BASE_FEATURES)
+
+    assert result.empty
