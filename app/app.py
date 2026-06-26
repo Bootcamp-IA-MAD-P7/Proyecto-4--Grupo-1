@@ -117,6 +117,29 @@ FEATURE_GUIDANCE = {
     "PoliticalFactors": "Bajo: buena coordinación. Medio: gestión irregular. Alto: barreras institucionales.",
 }
 
+DEFAULT_VARIABLE_RANGES = {
+    "MonsoonIntensity": {"min": 0, "max": 16, "default": 5},
+    "TopographyDrainage": {"min": 0, "max": 18, "default": 5},
+    "RiverManagement": {"min": 0, "max": 16, "default": 5},
+    "Deforestation": {"min": 0, "max": 17, "default": 5},
+    "Urbanization": {"min": 0, "max": 17, "default": 5},
+    "ClimateChange": {"min": 0, "max": 17, "default": 5},
+    "DamsQuality": {"min": 0, "max": 16, "default": 5},
+    "Siltation": {"min": 0, "max": 16, "default": 5},
+    "AgriculturalPractices": {"min": 0, "max": 16, "default": 5},
+    "Encroachments": {"min": 0, "max": 18, "default": 5},
+    "IneffectiveDisasterPreparedness": {"min": 0, "max": 16, "default": 5},
+    "DrainageSystems": {"min": 0, "max": 17, "default": 5},
+    "CoastalVulnerability": {"min": 0, "max": 17, "default": 5},
+    "Landslides": {"min": 0, "max": 16, "default": 5},
+    "Watersheds": {"min": 0, "max": 16, "default": 5},
+    "DeterioratingInfrastructure": {"min": 0, "max": 17, "default": 5},
+    "PopulationScore": {"min": 0, "max": 18, "default": 5},
+    "WetlandLoss": {"min": 0, "max": 19, "default": 5},
+    "InadequatePlanning": {"min": 0, "max": 16, "default": 5},
+    "PoliticalFactors": {"min": 0, "max": 16, "default": 5},
+}
+
 NOTEBOOK_CONTEXT = {
     "01_EDA.ipynb": (
         "Análisis exploratorio",
@@ -201,7 +224,7 @@ def cargar_preview(path, filas):
 @st.cache_data
 def cargar_rangos_variables(path):
     if not path.exists():
-        return {feature: {"min": 0, "max": 20, "default": 5} for feature in FEATURE_COLUMNS}
+        return DEFAULT_VARIABLE_RANGES
 
     df = pd.read_csv(path, usecols=FEATURE_COLUMNS)
     return {
@@ -219,7 +242,9 @@ def crear_muestra_demo_dataset(filas):
     for idx in range(filas):
         row = {"id": idx}
         for feature_idx, feature in enumerate(FEATURE_COLUMNS):
-            row[feature] = int((idx + feature_idx) % 10)
+            feature_range = DEFAULT_VARIABLE_RANGES[feature]
+            span = feature_range["max"] - feature_range["min"] + 1
+            row[feature] = int(feature_range["min"] + ((idx + feature_idx) % span))
         row["FloodProbability"] = round(0.25 + ((idx % 10) * 0.05), 3)
         rows.append(row)
     return pd.DataFrame(rows)
