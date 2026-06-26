@@ -193,7 +193,7 @@ datos validados para mejorar futuras versiones del modelo.
 9. Comprobar motor activo y registros persistidos.
 10. Entrar en `Pipeline de reentrenamiento`.
 11. Ejecutar pipeline si hay registros con valor real.
-12. Descargar dataset validado si procede.
+12. Descargar la vista previa procesada antes de ejecutar o el dataset procesado acumulado despues de ejecutar.
 
 ## Vistas de la app
 
@@ -292,7 +292,8 @@ Importante:
 - El pipeline prepara datos para una futura version.
 - En Render, la cola se gestiona desde PostgreSQL.
 - En local, la cola se gestiona desde CSV/SQLite.
-- Si ya existe un dataset procesado, la vista muestra `Descargar dataset procesado`.
+- Si hay registros validados pendientes, la vista permite descargar una vista previa procesada.
+- Si ya se ejecuto el pipeline y existe un dataset acumulado, la vista muestra `Descargar dataset procesado`.
 
 Notas de uso:
 
@@ -349,7 +350,7 @@ data/
     `-- sample_submission.csv
 ```
 
-Los CSV originales no se suben al repositorio. En Docker/Render, si no existe `train.csv`, la vista `Datos` muestra una muestra demo con la misma estructura para que la app no falle durante la presentacion.
+Los CSV originales no se suben al repositorio. En Docker/Render, si no existe `train.csv`, la vista `Datos` muestra una muestra sintetica con la misma estructura para explicar las columnas sin romper la demo. Esa muestra solo afecta a la vista exploratoria: el predictor usa el modelo entrenado y la persistencia de la app se gestiona con PostgreSQL en Render.
 
 ## Modelo productivo
 

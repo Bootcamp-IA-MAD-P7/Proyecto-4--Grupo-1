@@ -1483,16 +1483,22 @@ def guardar_dataset_reentrenamiento(retraining_df, path):
 
 
 def mostrar_descarga_dataset_procesado():
+    st.subheader("Dataset procesado")
     if not RETRAINING_DATASET_PATH.exists():
+        st.info(
+            "Todavia no hay un dataset procesado acumulado. Ejecuta el pipeline de ingesta cuando haya registros "
+            "con valor real observado para generarlo."
+        )
         return
     try:
         processed_df = pd.read_csv(RETRAINING_DATASET_PATH)
     except (pd.errors.ParserError, pd.errors.EmptyDataError):
+        st.warning("El dataset procesado existe, pero no se ha podido leer correctamente.")
         return
     if processed_df.empty:
+        st.info("El dataset procesado existe, pero todavia no contiene registros.")
         return
 
-    st.subheader("Dataset procesado disponible")
     st.caption(
         f"Archivo acumulado con {len(processed_df)} registros ya preparados por el pipeline."
     )
@@ -1614,10 +1620,14 @@ def mostrar_pipeline_reentrenamiento():
         with col_descargar:
             csv_bytes = retraining_df.to_csv(index=False).encode("utf-8")
             st.download_button(
-                "Descargar dataset validado",
+                "Descargar vista previa procesada",
                 data=csv_bytes,
                 file_name="retraining_dataset.csv",
                 mime="text/csv",
+            )
+            st.caption(
+                "Esta descarga usa los registros validados que estan listos ahora. Para dejarlos guardados como "
+                "dataset procesado acumulado, ejecuta el pipeline de ingesta."
             )
 
     st.subheader("Registros recientes recogidos por la app")
@@ -1658,10 +1668,13 @@ def mostrar_datos(num_rows):
 
     if not DATA_PATH.exists():
         st.warning(
-            "No se encontro el CSV original del dataset en este entorno. "
-            "Se muestra una muestra de demostracion con la misma estructura para mantener activa la vista."
+            "El CSV original del dataset no esta incluido en este entorno desplegado. "
+            "Esta vista muestra una muestra sintetica con la misma estructura solo para explicar las columnas."
         )
-        st.caption(f"Ruta esperada del dataset real: {DATA_PATH}")
+        st.caption(
+            f"Ruta esperada del dataset real en local: {DATA_PATH}. "
+            "El predictor, la monitorizacion y la base de datos siguen funcionando con el modelo y PostgreSQL."
+        )
         df_preview = crear_muestra_demo_dataset(num_rows)
     else:
         df_preview = cargar_preview(DATA_PATH, num_rows)
