@@ -2,55 +2,92 @@
 
 ![Python](https://img.shields.io/badge/Python-3.11-3776AB?style=for-the-badge&logo=python&logoColor=white)
 ![Machine Learning](https://img.shields.io/badge/Machine%20Learning-Regresion-1A7F37?style=for-the-badge)
-![Dataset](https://img.shields.io/badge/Dataset-Kaggle-20BEFF?style=for-the-badge&logo=kaggle&logoColor=white)
-![App](https://img.shields.io/badge/App-Streamlit-FF4B4B?style=for-the-badge&logo=streamlit&logoColor=white)
-![Estado](https://img.shields.io/badge/Nivel%20Medio-Hecho-1A7F37?style=for-the-badge)
+![Streamlit](https://img.shields.io/badge/App-Streamlit-FF4B4B?style=for-the-badge&logo=streamlit&logoColor=white)
+![Docker](https://img.shields.io/badge/Docker-Hecho-2496ED?style=for-the-badge&logo=docker&logoColor=white)
+![Render](https://img.shields.io/badge/Deploy-Render-000000?style=for-the-badge&logo=render&logoColor=white)
+![PostgreSQL](https://img.shields.io/badge/PostgreSQL-Persistencia-4169E1?style=for-the-badge&logo=postgresql&logoColor=white)
 
 Proyecto grupal de Machine Learning orientado a resolver un problema de **regresion** con el dataset **Regression with a Flood Prediction Dataset** de Kaggle.
 
-La solucion no se limita a entrenar un modelo en notebooks: tambien incluye una aplicacion Streamlit para usar el modelo, guardar feedback, monitorizar resultados, persistir datos en SQLite o PostgreSQL y preparar nuevos registros para futuros reentrenamientos.
+La solucion convierte un modelo entrenado en notebooks en una aplicacion desplegada y usable: permite estimar probabilidad de inundacion, guardar predicciones, recoger valor real observado, monitorizar errores, persistir datos en base de datos y preparar registros validados para futuros reentrenamientos.
 
-## Resumen ejecutivo
+## Aplicacion desplegada
 
-| Area | Estado | Evidencia principal |
+URL de la app:
+
+```text
+https://flood-risk-app-v7u1.onrender.com/
+```
+
+La app esta desplegada en Render como Web Service Docker. En despliegue usa PostgreSQL persistente mediante `DATABASE_URL`; en local usa SQLite como fallback.
+
+## Estado del proyecto
+
+| Bloque | Estado | Evidencia |
 |---|---|---|
 | Problema de regresion | Hecho | Prediccion numerica de `FloodProbability` |
 | EDA | Hecho | `notebooks/01_EDA.ipynb` |
 | Modelo baseline | Hecho | `notebooks/02_modeling.ipynb` |
 | Ensemble techniques | Hecho | `notebooks/03_ensemble-techniques.ipynb` |
-| Optimizacion | Hecho | `notebooks/04_hyperparameter_optimization.ipynb` |
 | Validacion cruzada | Hecho | `notebooks/05_cross_validation.ipynb` |
-| Productivizacion | Hecho | `app/app.py` |
+| Optimizacion de hiperparametros | Hecho | `notebooks/04_hyperparameter_optimization.ipynb` |
+| App productivizada | Hecho | `app/app.py` |
 | Feedback y monitorizacion | Hecho | Vista `Monitorizacion` |
-| Pipeline de ingesta | Hecho | Vista `Pipeline de reentrenamiento` |
-| Base de datos | Hecho | `src/database.py` y vista `Base de datos` |
+| Pipeline de ingesta | Hecho | Vista `Pipeline de reentrenamiento` y `src/pipeline.py` |
 | Feature engineering | Hecho | `src/features.py` |
-| Exploracion visual | Hecho | PyGWalker en vista `Datos` |
+| Base de datos | Hecho | SQLite local y PostgreSQL en Render |
+| Docker | Hecho | `Dockerfile`, `.dockerignore`, `requirements-docker.txt` |
+| Despliegue | Hecho | Render Web Service |
+| Tests unitarios | Hecho | `tests/` |
+| Documentacion | Hecho | `README.md`, `docs/dataset.md`, `docs/dailies/` |
+| Jira | Pendiente administrativo | Actualizacion final del tablero |
 
 ## Que problema resuelve
 
-El objetivo es predecir `FloodProbability`, una variable numerica que representa la probabilidad estimada de inundacion de una zona a partir de factores como intensidad del monzon, drenaje, deforestacion, urbanizacion, calidad de presas, vulnerabilidad costera, planificacion o infraestructura.
+El objetivo es predecir `FloodProbability`, una variable numerica que representa la probabilidad estimada de inundacion de una zona a partir de factores como intensidad del monzon, drenaje, gestion de rios, deforestacion, urbanizacion, calidad de presas, vulnerabilidad costera, planificacion, preparacion ante desastres o infraestructura.
 
-Es un problema de regresion porque la salida no es una clase cerrada, sino un valor continuo. En la aplicacion se muestra como porcentaje para que sea mas interpretable.
+Es un problema de regresion porque la salida no es una categoria cerrada, sino un valor continuo. En la app se muestra como porcentaje para facilitar su interpretacion.
 
 ## Que hace la aplicacion
 
-La aplicacion Streamlit convierte el trabajo tecnico del proyecto en una herramienta usable:
+La aplicacion Streamlit cierra el ciclo funcional del proyecto:
 
-1. Recibe condiciones de una zona mediante controles.
+```text
+EDA -> modelo -> app -> prediccion -> feedback -> monitorizacion -> base de datos -> pipeline de ingesta
+```
+
+Funciones principales:
+
+1. Recibe las condiciones de una zona mediante controles.
 2. Calcula una probabilidad estimada de inundacion.
 3. Guarda cada prediccion como registro de seguimiento.
 4. Permite incorporar el valor real observado cuando se conozca.
-5. Calcula metricas de monitorizacion cuando hay valores reales.
-6. Guarda la informacion en CSV y tambien en base de datos.
-7. Prepara un dataset validado para futuros reentrenamientos.
-8. Muestra indicadores de feature engineering para explicar mejor el riesgo.
-9. Permite revisar notebooks y explorar datos desde la propia app.
+5. Calcula metricas de monitorizacion cuando existen valores reales.
+6. Persiste los datos en CSV y base de datos.
+7. Prepara registros validados para futuros reentrenamientos.
+8. Calcula indicadores de feature engineering para explicar mejor el riesgo.
+9. Integra notebooks e inspeccion visual de datos dentro de la app.
 
-La idea funcional es cerrar el ciclo:
+## Demo recomendada
+
+Orden sugerido para presentar la aplicacion:
+
+| Paso | Vista | Mensaje clave |
+|---|---|---|
+| 1 | `Guia del proyecto` | La app convierte el modelo en una herramienta usable |
+| 2 | `Prediccion` | Se introducen condiciones de una zona y se obtiene una probabilidad |
+| 3 | `Monitorizacion` | Las predicciones guardadas permiten medir errores cuando hay valor real |
+| 4 | `Base de datos` | En Render los registros se guardan en PostgreSQL persistente |
+| 5 | `Pipeline de reentrenamiento` | Solo los casos con valor real observado entran en el dataset validado |
+| 6 | `Datos` | La app permite explorar el dataset o una muestra de demostracion |
+| 7 | `Informes tecnicos` | Los notebooks justifican el EDA, el modelado y la evaluacion |
+
+Ejemplo de narracion:
 
 ```text
-EDA -> modelo -> app -> prediccion -> feedback -> monitorizacion -> datos validados -> pipeline de ingesta
+La aplicacion no solo predice. Permite usar el modelo, guardar feedback real,
+monitorizar el rendimiento y preparar nuevos datos validados para mejorar futuras
+versiones del modelo.
 ```
 
 ## Dataset
@@ -64,7 +101,7 @@ EDA -> modelo -> app -> prediccion -> feedback -> monitorizacion -> datos valida
 | Variable objetivo | `FloodProbability` |
 | Tipo de problema | Regresion |
 
-Los CSV deben descargarse desde Kaggle y colocarse localmente en:
+Los CSV originales deben descargarse desde Kaggle y colocarse localmente en:
 
 ```text
 data/raw/
@@ -80,159 +117,40 @@ data/
     `-- sample_submission.csv
 ```
 
-Los datos no se suben al repositorio. `.gitignore` excluye los CSV de `data/raw/`.
-
-## Instalacion
-
-Crear entorno virtual:
-
-```bash
-python -m venv .venv
-```
-
-Activarlo en Windows con Git Bash:
-
-```bash
-source .venv/Scripts/activate
-```
-
-Instalar dependencias:
-
-```bash
-pip install -r requirements.txt
-```
-
-## Ejecutar la aplicacion
-
-Desde la raiz del proyecto:
-
-```bash
-streamlit run app/app.py
-```
-
-La aplicacion se abre normalmente en:
-
-```text
-http://localhost:8501
-```
-
-## Ejecutar con Docker
-
-El proyecto incluye una version dockerizada de la aplicacion Streamlit.
-
-Archivos principales:
-
-```text
-Dockerfile
-.dockerignore
-requirements-docker.txt
-```
-
-Construir la imagen desde la raiz del proyecto:
-
-```bash
-docker build -t flood-risk-app .
-```
-
-Ejecutar el contenedor:
-
-```bash
-docker run --rm -p 8501:8501 flood-risk-app
-```
-
-Abrir la aplicacion:
-
-```text
-http://localhost:8501
-```
-
-La imagen usa `python:3.11-slim`, instala las dependencias necesarias para ejecutar la app y expone el puerto `8501`.
-
-Para ejecucion local con datos persistentes, se puede montar la carpeta `data/` como volumen:
-
-```bash
-docker run --rm -p 8501:8501 -v "$(pwd)/data:/app/data" flood-risk-app
-```
-
-Esto permite conservar feedback, nuevos registros y la base SQLite fuera del ciclo de vida del contenedor.
-
-## Despliegue en Render
-
-La app esta preparada para desplegarse en Render como servicio Docker.
-
-Configuracion recomendada:
-
-| Campo | Valor |
-|---|---|
-| Service type | Web Service |
-| Runtime / Language | Docker |
-| Branch | `dev` |
-| Dockerfile path | `./Dockerfile` |
-| Health check path | `/_stcore/health` |
-
-El `Dockerfile` usa la variable `PORT` si Render la proporciona y, en local, mantiene `8501` como valor por defecto.
-
-Render construye la imagen desde el `Dockerfile` del repositorio y publica una URL web para la aplicacion.
-
-Para que los datos recogidos por la app no dependan del sistema de archivos del contenedor, se recomienda crear una base PostgreSQL en Render y anadir esta variable de entorno al Web Service:
-
-| Variable | Valor |
-|---|---|
-| `DATABASE_URL` | Internal Database URL de la base PostgreSQL de Render |
-
-Si `DATABASE_URL` existe, la aplicacion guarda predicciones y eventos en PostgreSQL. Si no existe, usa SQLite local como fallback para desarrollo.
-
-## Ejecutar tests unitarios
-
-El proyecto incluye tests unitarios minimos para validar feature engineering, persistencia local SQLite y construccion del dataset de reentrenamiento.
-
-Instalar dependencias de desarrollo:
-
-```bash
-pip install -r requirements-dev.txt
-```
-
-Ejecutar tests:
-
-```bash
-python -m pytest
-```
+Los CSV originales no se suben al repositorio. Si el dataset real no existe en Docker o Render, la app muestra una muestra de demostracion con la misma estructura para que la vista `Datos` siga funcionando durante la demo.
 
 ## Modelo productivo
 
-La app espera el modelo entrenado en:
+La app usa un modelo baseline de regresion lineal guardado como artefacto `joblib`.
+
+Rutas de busqueda:
 
 ```text
 models/flood_baseline_model.joblib
-```
-
-Si no lo encuentra ahi, tambien lo busca en:
-
-```text
 data/raw/models/flood_baseline_model.joblib
 ```
 
-Si lo encuentra en esa ruta secundaria, lo copia automaticamente a `models/`.
+Si el modelo se encuentra en la ruta secundaria, la app lo copia automaticamente a `models/`.
 
-Modelo activo:
+Metricas del modelo activo:
 
 | Modelo | RMSE validation | MAE validation | R2 validation | Overfitting R2 |
 |---|---:|---:|---:|---:|
 | Linear Regression | 0.0201 | 0.0158 | 0.8449 | 0.077% |
 
-El baseline se mantiene como modelo productivo porque los modelos optimizados evaluados no mejoraron su rendimiento global.
+El baseline se mantiene como modelo productivo porque los modelos optimizados y ensemble evaluados no mejoraron su rendimiento global de forma suficiente para sustituirlo.
 
 ## Vistas de la app
 
 | Vista | Funcion |
 |---|---|
-| `Guia del proyecto` | Explica que hace la app, como se usa y como interpretar sus resultados |
+| `Guia del proyecto` | Explica que hace la app, como se usa y como interpretar resultados |
 | `Prediccion` | Calcula la probabilidad estimada de inundacion |
 | `Monitorizacion` | Revisa feedback, metricas, valores reales y gestion de registros |
-| `Base de datos` | Comprueba el guardado estructurado de predicciones en SQLite local o PostgreSQL en despliegue |
+| `Base de datos` | Comprueba el guardado estructurado en SQLite local o PostgreSQL en Render |
 | `Pipeline de reentrenamiento` | Prepara registros validados para futuros reentrenamientos |
 | `Informes tecnicos` | Muestra notebooks del proyecto con contexto |
-| `Datos` | Muestra muestra del dataset y explorador visual con PyGWalker |
+| `Datos` | Muestra tabla de datos y explorador visual con PyGWalker |
 
 ## Flujo practico de uso
 
@@ -240,25 +158,25 @@ El baseline se mantiene como modelo productivo porque los modelos optimizados ev
 2. Ajustar los factores de riesgo mediante sliders.
 3. Pulsar `Calcular riesgo de inundacion`.
 4. Revisar el porcentaje estimado y la lectura de riesgo.
-5. Si se conoce el valor real observado, guardarlo.
+5. Si se conoce el valor real observado, marcar la casilla correspondiente y guardarlo.
 6. Entrar en `Monitorizacion` para revisar errores y metricas.
-7. Entrar en `Base de datos` para comprobar que la prediccion quedo persistida.
-8. Entrar en `Pipeline de reentrenamiento` para preparar datos validados.
-9. Usar `Datos` para explorar visualmente el dataset.
+7. Entrar en `Base de datos` para comprobar que el registro quedo persistido.
+8. Entrar en `Pipeline de reentrenamiento` para generar el dataset validado.
+9. Usar `Datos` para explorar visualmente la estructura del dataset.
 
-## Feedback, monitorizacion y valor real
+## Feedback y monitorizacion
 
-Cada prediccion se guarda localmente. Si el valor real todavia no se conoce, el registro queda pendiente. Cuando el valor real se incorpora, la app puede comparar prediccion contra realidad.
+Cada prediccion queda guardada. Si el valor real todavia no se conoce, el registro queda pendiente. Cuando el valor real se incorpora, la app compara prediccion y realidad.
 
-Metricas usadas en monitorizacion:
+Metricas usadas:
 
-| Metrica | Que indica |
+| Metrica | Interpretacion |
 |---|---|
 | MAE | Error absoluto medio entre prediccion y valor real |
-| RMSE | Error cuadratico medio, penaliza mas los errores grandes |
+| RMSE | Error cuadratico medio; penaliza mas los errores grandes |
 | R2 | Proporcion de variabilidad explicada cuando hay suficientes valores reales |
 
-Rutas generadas por la app:
+Rutas generadas en local:
 
 ```text
 data/feedback/predicciones.csv
@@ -267,23 +185,22 @@ data/processed/retraining_dataset.csv
 data/database/flood_app.sqlite
 ```
 
-Estos archivos son generados localmente y no se suben al repositorio.
+Estos archivos son generados por uso de la app y no se suben al repositorio.
 
 ## Base de datos
 
-La app guarda datos en una base estructurada. En desarrollo local usa SQLite para no depender de servicios externos. En despliegue puede usar PostgreSQL si existe la variable de entorno `DATABASE_URL`.
-
-Archivo generado en modo local:
-
-```text
-data/database/flood_app.sqlite
-```
-
-Implementacion:
+La persistencia esta implementada en:
 
 ```text
 src/database.py
 ```
+
+Comportamiento:
+
+| Entorno | Motor | Persistencia |
+|---|---|---|
+| Local sin `DATABASE_URL` | SQLite | Archivo local `data/database/flood_app.sqlite` |
+| Render con `DATABASE_URL` | PostgreSQL | Base persistente gestionada por Render |
 
 Tablas principales:
 
@@ -292,24 +209,22 @@ Tablas principales:
 | `app_predictions` | Predicciones, valores introducidos, modelo, valor real, error y estado |
 | `app_events` | Eventos de guardado, actualizacion y borrado |
 
-La vista `Base de datos` permite ver:
+La vista `Base de datos` muestra:
 
-- estado de la base,
+- motor activo,
 - total de predicciones,
 - predicciones con valor real,
 - predicciones pendientes,
 - registros recientes.
 
-En Render, la persistencia recomendada es PostgreSQL:
+Configuracion en Render:
 
-1. Crear una base PostgreSQL en Render.
+1. Crear una base PostgreSQL.
 2. Copiar su `Internal Database URL`.
-3. Anadirla en el Web Service como variable `DATABASE_URL`.
+3. Anadirla al Web Service como variable `DATABASE_URL`.
 4. Redeplegar la aplicacion.
 
-Con esa configuracion, los registros sobreviven a reinicios y nuevos despliegues del contenedor.
-
-Tambien se conserva `src/db_setup.sql` como referencia de esquema.
+Con esta configuracion, los registros sobreviven a reinicios y nuevos despliegues del contenedor.
 
 ## Pipeline de ingesta para reentrenamiento
 
@@ -332,7 +247,7 @@ El boton `Ejecutar pipeline de ingesta`:
 - genera el dataset de reentrenamiento,
 - no cambia el modelo activo.
 
-La prediccion del modelo se conserva como referencia, pero no se usa como target. Para reentrenar se usa el valor real observado como nueva `FloodProbability`.
+La prediccion del modelo se conserva como referencia, pero no se usa como variable objetivo. Para reentrenar se usa el valor real observado como nueva `FloodProbability`.
 
 ## Feature engineering
 
@@ -359,7 +274,7 @@ Uso actual:
 - En `Prediccion`, los indicadores ayudan a explicar el caso introducido.
 - En `Pipeline de reentrenamiento`, enriquecen el dataset validado.
 
-El modelo baseline actual sigue usando las 20 variables originales para mantener compatibilidad con el artefacto entrenado. La capa de feature engineering queda preparada para entrenar futuras versiones.
+El modelo productivo actual sigue usando las 20 variables originales para mantener compatibilidad con el artefacto entrenado. La capa de feature engineering queda preparada para entrenar futuras versiones.
 
 ## Exploracion visual de datos
 
@@ -369,8 +284,6 @@ La vista `Datos` incluye:
 - explorador visual integrado con PyGWalker.
 
 PyGWalker permite cruzar columnas, crear graficos rapidos y reforzar el EDA desde la app sin abrir notebooks ni escribir codigo.
-
-Si el CSV original de Kaggle no esta disponible en un entorno Docker o cloud, la app muestra una muestra de demostracion con la misma estructura de columnas. Esto evita que la vista falle durante una demo o despliegue, sin sustituir al dataset real cuando este disponible localmente.
 
 ## Notebooks
 
@@ -385,7 +298,7 @@ Si el CSV original de Kaggle no esta disponible en un entorno Docker o cloud, la
 
 ## Cumplimiento del briefing
 
-### Nivel Esencial
+### Nivel esencial
 
 | Requisito | Estado | Evidencia |
 |---|---|---|
@@ -395,43 +308,138 @@ Si el CSV original de Kaggle no esta disponible en un entorno Docker o cloud, la
 | Solucion productivizada | Hecho | `app/app.py` |
 | Informe de rendimiento | Hecho | metricas, residuos, prediccion vs real |
 
-### Nivel Medio
+### Nivel medio
 
 | Requisito | Estado | Evidencia |
 |---|---|---|
 | Modelo con tecnicas ensemble | Hecho | `notebooks/03_ensemble-techniques.ipynb` |
 | Validacion cruzada | Hecho | `notebooks/05_cross_validation.ipynb` |
 | Optimizacion de hiperparametros | Hecho | `notebooks/04_hyperparameter_optimization.ipynb` |
-| Feedback para monitorizar performance | Hecho | vista `Monitorizacion` |
-| Recogida de datos nuevos para reentrenamiento | Hecho | vista `Pipeline de reentrenamiento` |
+| Feedback para monitorizar performance | Hecho | Vista `Monitorizacion` |
+| Recogida de datos nuevos para reentrenamiento | Hecho | Vista `Pipeline de reentrenamiento` |
 
-### Nivel Avanzado abordado
+### Nivel avanzado
 
 | Requisito | Estado | Evidencia |
 |---|---|---|
-| Guardado en base de datos | Hecho | SQLite local y PostgreSQL opcional con `DATABASE_URL` en `src/database.py` |
 | Version dockerizada del programa | Hecho | `Dockerfile`, `.dockerignore`, `requirements-docker.txt` |
+| Guardado en base de datos | Hecho | SQLite local y PostgreSQL en Render |
+| Despliegue | Hecho | Render Web Service Docker |
 | Inclusion de tests unitarios | Hecho | `tests/` |
-| Despliegue | Hecho | Render Web Service con Docker |
+
+## Instalacion local
+
+Crear entorno virtual:
+
+```bash
+python -m venv .venv
+```
+
+Activarlo en Windows con Git Bash:
+
+```bash
+source .venv/Scripts/activate
+```
+
+Instalar dependencias:
+
+```bash
+pip install -r requirements.txt
+```
+
+Ejecutar la app:
+
+```bash
+streamlit run app/app.py
+```
+
+Abrir:
+
+```text
+http://localhost:8501
+```
+
+## Docker
+
+Construir la imagen:
+
+```bash
+docker build -t flood-risk-app .
+```
+
+Ejecutar el contenedor:
+
+```bash
+docker run --rm -p 8501:8501 flood-risk-app
+```
+
+Ejecutar con volumen local para conservar datos generados:
+
+```bash
+docker run --rm -p 8501:8501 -v "$(pwd)/data:/app/data" flood-risk-app
+```
+
+El `Dockerfile` usa la variable `PORT` si el entorno la proporciona y, en local, mantiene `8501` como valor por defecto.
+
+## Tests
+
+Instalar dependencias de desarrollo:
+
+```bash
+pip install -r requirements-dev.txt
+```
+
+Ejecutar tests:
+
+```bash
+python -m pytest
+```
+
+Tests incluidos:
+
+| Test | Objetivo |
+|---|---|
+| `tests/test_features.py` | Validar indicadores de feature engineering |
+| `tests/test_database.py` | Validar ciclo de guardado, actualizacion y borrado en SQLite |
+| `tests/test_pipeline.py` | Validar que el dataset de reentrenamiento solo usa registros con valor real |
+
+## Verificaciones realizadas
+
+Comandos usados en la revision final:
+
+```bash
+python -m pytest
+python -m py_compile app\app.py app\paths.py src\features.py src\database.py src\db_insert.py src\pipeline.py
+git diff --check
+docker build -t flood-risk-app .
+docker run --rm -p 8501:8501 flood-risk-app
+```
+
+Resultados:
+
+| Verificacion | Resultado |
+|---|---|
+| Tests unitarios | `5 passed` |
+| Compilacion Python | Correcta |
+| Revision de espacios con Git | Correcta |
+| Build Docker | Correcto |
+| Ejecucion local Docker | Correcta |
+| Despliegue Render | Correcto |
 
 ## Distribucion de tareas del equipo
 
-La distribucion se presenta por participante para que la defensa del proyecto tenga una narrativa clara y ordenada.
+La distribucion se presenta para ordenar la defensa y explicar responsabilidades por bloque.
 
 | Participante | Bloque principal | Tareas asignadas | Evidencia |
 |---|---|---|---|
-| Participante 1 | Analisis exploratorio y datos | Revision del dataset, analisis de nulos, distribuciones, correlaciones, visualizaciones iniciales y lectura de variables | `notebooks/01_EDA.ipynb`, `docs/dataset.md` |
-| Participante 2 | Modelado baseline y metricas | Separacion train/test, entrenamiento de modelos iniciales, seleccion del baseline, analisis de overfitting, residuos, prediccion vs real y guardado del modelo | `notebooks/02_modeling.ipynb` |
-| Participante 3 | Mejora y validacion del modelo | Modelos ensemble, comparacion con baseline, validacion cruzada, optimizacion de hiperparametros y explicacion de por que se mantiene el baseline | `notebooks/03_ensemble-techniques.ipynb`, `notebooks/04_hyperparameter_optimization.ipynb`, `notebooks/05_cross_validation.ipynb` |
-| Participante 4 | Productivizacion y cierre funcional | App Streamlit, feedback, monitorizacion, base de datos SQLite/PostgreSQL, pipeline de ingesta, feature engineering, explorador visual, documentacion final y preparacion de despliegue | `app/app.py`, `src/database.py`, `src/features.py`, `notebooks/06_retraining_pipeline.ipynb`, `README.md` |
+| Participante 1 | Analisis exploratorio y datos | Revision del dataset, nulos, distribuciones, correlaciones, visualizaciones iniciales y lectura de variables | `notebooks/01_EDA.ipynb`, `docs/dataset.md` |
+| Participante 2 | Modelado baseline y metricas | Separacion train/test, entrenamiento inicial, seleccion del baseline, overfitting, residuos, prediccion vs real y guardado del modelo | `notebooks/02_modeling.ipynb` |
+| Participante 3 | Mejora y validacion | Modelos ensemble, comparacion con baseline, validacion cruzada, optimizacion de hiperparametros y explicacion de resultados | `notebooks/03_ensemble-techniques.ipynb`, `notebooks/04_hyperparameter_optimization.ipynb`, `notebooks/05_cross_validation.ipynb` |
+| Participante 4 | Productivizacion y cierre | App Streamlit, feedback, monitorizacion, base de datos, pipeline de ingesta, feature engineering, Docker, despliegue, tests y documentacion | `app/app.py`, `src/database.py`, `src/features.py`, `src/pipeline.py`, `Dockerfile`, `tests/`, `README.md` |
 
-Trabajo transversal pendiente o coordinado por el equipo:
+Pendiente administrativo:
 
-- Preparacion de presentacion final.
-- Revision de narrativa de defensa.
-- Dockerizacion de la aplicacion.
-- Despliegue.
-- Revision final de documentacion y Pull Request hacia `dev`.
+- Actualizar Jira con el cierre final del proyecto.
 
 ## Estructura del proyecto
 
@@ -441,36 +449,43 @@ Proyecto-4--Grupo-1/
 |   |-- app.py
 |   |-- paths.py
 |   |-- style.css
-|   `-- assets/
+|   |-- assets/
+|   `-- notebooks_html/
 |-- data/
-|   |-- feedback/
-|   |-- new_data/
 |   |-- processed/
 |   `-- raw/
+|       `-- models/
 |-- docs/
 |   |-- dailies/
 |   `-- dataset.md
 |-- models/
 |-- notebooks/
+|-- reports/
 |-- src/
 |   |-- database.py
-|   |-- db_setup.sql
 |   |-- db_insert.py
-|   `-- features.py
+|   |-- db_setup.sql
+|   |-- features.py
+|   `-- pipeline.py
+|-- tests/
+|-- .dockerignore
 |-- .gitignore
+|-- Dockerfile
 |-- README.md
-`-- requirements.txt
+|-- requirements.txt
+|-- requirements-dev.txt
+`-- requirements-docker.txt
 ```
 
-## Documentacion del proyecto
+## Documentacion
 
 | Documento | Contenido |
 |---|---|
-| `README.md` | Documento principal del proyecto: objetivo, app, modelo, pipeline, base de datos, feature engineering, tareas y ejecucion |
-| `docs/dataset.md` | Informacion especifica del dataset, rutas y archivos generados |
-| `docs/dailies/` | Registro de reuniones diarias |
+| `README.md` | Documento principal del proyecto |
+| `docs/dataset.md` | Informacion especifica del dataset |
+| `docs/dailies/` | Registro de dailies |
 
-El documento narrativo interno del equipo queda fuera de Git en:
+El documento narrativo interno del equipo queda fuera de Git:
 
 ```text
 docs/internal/
@@ -485,7 +500,8 @@ docs/internal/
 | Machine Learning | Scikit-learn, XGBoost, LightGBM, Optuna |
 | Productivizacion | Streamlit |
 | Contenerizacion | Docker |
-| Persistencia | SQLite local, PostgreSQL en despliegue |
+| Despliegue | Render |
+| Persistencia | SQLite local, PostgreSQL en Render |
 | Persistencia de modelo | Joblib |
 | Entorno de trabajo | Jupyter Notebook, Google Colab, VS Code |
 
@@ -497,30 +513,14 @@ No se suben:
 - CSV generados por la app,
 - bases SQLite locales,
 - secretos de Streamlit,
-- modelos binarios locales si se generan en `models/`,
-- documentacion interna de trabajo en `docs/internal/`.
-
-## Verificaciones realizadas
-
-Comandos usados para revisar el estado antes de merge:
-
-```bash
-python -m py_compile app\app.py app\paths.py src\features.py src\database.py src\db_insert.py
-python -m pip check
-git diff --check
-python -m pytest
-docker build -t flood-risk-app .
-docker run --rm -p 8501:8501 flood-risk-app
-```
-
-Tambien se comprobo la carga local de Streamlit en `http://localhost:8501`, tanto en ejecucion local como dentro del contenedor Docker.
+- documentacion interna en `docs/internal/`.
 
 ## Flujo de Git
 
 | Rama | Uso |
 |---|---|
-| `main` | Versiones estables |
+| `main` | Version final estable |
 | `dev` | Rama principal de desarrollo |
 | ramas de tarea | Cambios concretos mediante Pull Request |
 
-Los cambios se integran mediante Pull Requests hacia `dev`. La rama `main` queda reservada para versiones estables.
+El flujo de trabajo usa Pull Requests hacia `dev` y, tras validacion final, merge de `dev` hacia `main`.
